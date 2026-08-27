@@ -1,0 +1,639 @@
+================================================================================
+          ASCEND PERFORMANCE MANAGEMENT MODULE - API & FIELD SPECIFICATION
+================================================================================
+Base URL:   http://localhost:8080
+Swagger UI: http://localhost:8080/swagger-ui/index.html
+OpenAPI JSON: http://localhost:8080/v3/api-docs
+
+================================================================================
+1. DEFAULT SEEDED TEST ACCOUNTS (POSTGRESQL DATABASE)
+================================================================================
+Role        Email                   Password     Code     User ID
+--------------------------------------------------------------------------------
+HR Admin    hr@ascend.local         Password1    HR001    1
+Manager 1   manager1@ascend.local   Password1    MGR001   2
+Manager 7   manager7@ascend.local   Password1    MGR007   19 (Ananya Iyer)
+Employee 1  emp1@ascend.local       Password1    EMP001   4  (John Doe)
+Employee 2  emp2@ascend.local       Password1    EMP002   5  (Emma Davis)
+
+================================================================================
+2. AUTHENTICATION & PUBLIC APIS
+================================================================================
+
+--------------------------------------------------------------------------------
+[API-01] USER LOGIN
+--------------------------------------------------------------------------------
+Method:      POST
+Endpoint:    /api/auth/login
+Auth:        Public (None)
+
+Request Body (JSON):
+  - email                 [String, Required]  Registered user email
+  - password              [String, Required]  Plaintext password
+
+Sample Request:
+{
+  "email": "hr@ascend.local",
+  "password": "Password1"
+}
+
+Response Fields (200 OK):
+  - token                 [String]   Signed JWT Bearer token
+  - id                    [Long]     User ID primary key
+  - employeeCode          [String]   Code (e.g. HR001, MGR007, EMP001)
+  - name                  [String]   User's full name
+  - email                 [String]   User's email
+  - role                  [String]   Role (HR, MANAGER, EMPLOYEE)
+  - departmentId          [Long]     Assigned Department ID
+  - departmentName        [String]   Assigned Department name
+
+--------------------------------------------------------------------------------
+[API-02] REGISTER EMPLOYEE (SIGNUP)
+--------------------------------------------------------------------------------
+Method:      POST
+Endpoint:    /api/auth/signup
+Auth:        Public (None)
+
+Request Body (JSON):
+  - name                  [String,  Required] 2-100 chars, legal name
+  - email                 [String,  Required] Unique valid email format
+  - password              [String,  Required] Min 8 chars, 1 uppercase, 1 lowercase, 1 digit
+  - confirmPassword       [String,  Required] Must match password
+  - departmentId          [Long,    Required] Existing Department ID
+  - skill                 [String,  Optional] Technical skills (e.g. "Java, Spring Boot")
+  - domain                [String,  Optional] Business domain (e.g. "Engineering")
+  - location              [String,  Optional] Location (e.g. "Hyderabad")
+  - experienceYears       [Integer, Optional] Years of experience (>= 0)
+
+Sample Request:
+{
+  "name": "David Miller",
+  "email": "david.miller@ascend.local",
+  "password": "Password1",
+  "confirmPassword": "Password1",
+  "departmentId": 1,
+  "skill": "Java, Spring Boot, React",
+  "domain": "Engineering",
+  "location": "Hyderabad",
+  "experienceYears": 4
+}
+
+Response Fields (201 Created):
+  - id                    [Long]     Auto-generated User ID
+  - employeeCode          [String]   Auto-generated unique code (e.g. EMP020)
+  - name                  [String]   Full name
+  - email                 [String]   Registered email
+  - role                  [String]   "EMPLOYEE"
+  - departmentId          [Long]     Department ID
+  - createdAt             [String]   ISO Timestamp
+
+--------------------------------------------------------------------------------
+[API-03] GET CURRENT USER PROFILE
+--------------------------------------------------------------------------------
+Method:      GET
+Endpoint:    /api/auth/me
+Auth:        Bearer Token (Any Authenticated User)
+Response:    Returns LoginResponse profile object of the token holder.
+
+--------------------------------------------------------------------------------
+[API-04] PUBLIC DEPARTMENTS LIST
+--------------------------------------------------------------------------------
+Method:      GET
+Endpoint:    /api/auth/departments
+Auth:        Public (None)
+Response:    List of { "id": Long, "name": String }
+
+================================================================================
+3. HR MANAGEMENT APIS (ROLE: HR)
+================================================================================
+
+--------------------------------------------------------------------------------
+[API-05] CREATE DEPARTMENT
+--------------------------------------------------------------------------------
+Method:      POST
+Endpoint:    /api/hr/departments
+Auth:        Bearer Token (HR)
+
+Request Body (JSON):
+  - name                  [String, Required] Unique dept name (2-100 chars)
+  - description           [String, Optional] Max 500 chars
+  - defaultManagerId      [Long,   Optional] User ID of active manager in this dept
+
+Sample Request:
+{
+  "name": "Cloud Platform & DevOps",
+  "description": "AWS infrastructure and Kubernetes cluster management",
+  "defaultManagerId": 2
+}
+
+Response Fields (201 Created):
+  - id                    [Long]   Department ID
+  - name                  [String] Department name
+  - description           [String] Description
+  - defaultManagerId      [Long]   Default manager ID
+  - defaultManagerName    [String] Default manager name
+  - employeeCount         [Long]   Total active employees in department
+
+--------------------------------------------------------------------------------
+[API-06] LIST ALL DEPARTMENTS
+--------------------------------------------------------------------------------
+Method:      GET
+Endpoint:    /api/hr/departments
+Auth:        Bearer Token (HR)
+Response:    List of DepartmentResponse objects.
+
+--------------------------------------------------------------------------------
+[API-07] SET DEFAULT MANAGER FOR DEPARTMENT
+--------------------------------------------------------------------------------
+Method:      PUT
+Endpoint:    /api/hr/departments/{departmentId}/default-manager
+Auth:        Bearer Token (HR)
+Path Param:  departmentId (Long, Required)
+
+Request Body (JSON):
+  - managerId             [Long, Required] User ID of active manager in this dept
+
+--------------------------------------------------------------------------------
+[API-08] GET DEPARTMENT EMPLOYEES
+--------------------------------------------------------------------------------
+Method:      GET
+Endpoint:    /api/hr/departments/{departmentId}/employees
+Auth:        Bearer Token (HR)
+Path Param:  departmentId (Long, Required)
+Response:    List of EmployeeResponse objects belonging to the department.
+
+--------------------------------------------------------------------------------
+[API-09] PROVISION NEW MANAGER ACCOUNT
+--------------------------------------------------------------------------------
+Method:      POST
+Endpoint:    /api/hr/employees/managers
+Auth:        Bearer Token (HR)
+
+Request Body (JSON):
+  - name                  [String, Required] Full name
+  - email                 [String, Required] Unique corporate email
+  - departmentId          [Long,   Required] Department ID
+  - temporaryPassword     [String, Optional] Defaults to "Password1"
+
+Sample Request:
+{
+  "name": "Siddharth Verma",
+  "email": "siddharth.v@ascend.local",
+  "departmentId": 1,
+  "temporaryPassword": "Password1"
+}
+
+Response Fields (201 Created):
+  - Returns EmployeeResponse with role="MANAGER" and generated code (e.g. MGR008).
+
+--------------------------------------------------------------------------------
+[API-10] GET ALL EMPLOYEES
+--------------------------------------------------------------------------------
+Method:      GET
+Endpoint:    /api/hr/employees
+Auth:        Bearer Token (HR)
+Response:    List of all active EmployeeResponse objects.
+
+--------------------------------------------------------------------------------
+[API-11] GET ALL MANAGERS
+--------------------------------------------------------------------------------
+Method:      GET
+Endpoint:    /api/hr/employees/managers
+Auth:        Bearer Token (HR)
+Response:    List of all active Manager EmployeeResponse objects.
+
+--------------------------------------------------------------------------------
+[API-12] CREATE PERFORMANCE CYCLE (STARTS IN DRAFT)
+--------------------------------------------------------------------------------
+Method:      POST
+Endpoint:    /api/hr/performance-cycles
+Auth:        Bearer Token (HR)
+
+Request Body (JSON):
+  - name                  [String,    Required] Unique cycle name (3-100 chars)
+  - description           [String,    Optional] Max 500 chars
+  - startDate             [LocalDate, Required] ISO format (yyyy-MM-dd)
+  - endDate               [LocalDate, Required] ISO format (yyyy-MM-dd, >= startDate)
+
+Sample Request:
+{
+  "name": "2026 Q4 Global Strategic Review",
+  "description": "End-of-year comprehensive performance cycle",
+  "startDate": "2026-10-01",
+  "endDate": "2026-12-31"
+}
+
+Response Fields (201 Created):
+  - id                    [Long]      Cycle ID
+  - name                  [String]    Cycle name
+  - description           [String]    Description
+  - startDate             [LocalDate] Start date
+  - endDate               [LocalDate] End date
+  - status                [String]    "DRAFT"
+  - createdBy             [Long]      HR User ID
+  - createdAt             [String]    ISO Timestamp
+
+--------------------------------------------------------------------------------
+[API-13] LAUNCH / ACTIVATE PERFORMANCE CYCLE
+--------------------------------------------------------------------------------
+Method:      PATCH
+Endpoint:    /api/hr/performance-cycles/{id}/launch
+Auth:        Bearer Token (HR)
+Path Param:  id (Long, Required)
+Response:    Transitions status from DRAFT -> ACTIVE.
+
+--------------------------------------------------------------------------------
+[API-14] CLOSE PERFORMANCE CYCLE
+--------------------------------------------------------------------------------
+Method:      PATCH
+Endpoint:    /api/hr/performance-cycles/{id}/close
+Auth:        Bearer Token (HR)
+Path Param:  id (Long, Required)
+Response:    Transitions status to CLOSED (read-only archive).
+
+--------------------------------------------------------------------------------
+[API-15] UPDATE PERFORMANCE CYCLE
+--------------------------------------------------------------------------------
+Method:      PUT
+Endpoint:    /api/hr/performance-cycles/{id}
+Auth:        Bearer Token (HR)
+Path Param:  id (Long, Required)
+
+Request Body (JSON):
+  - name                  [String,    Required]
+  - description           [String,    Optional]
+  - startDate             [LocalDate, Required]
+  - endDate               [LocalDate, Required]
+
+--------------------------------------------------------------------------------
+[API-16] ASSIGN MANAGER TO EMPLOYEE
+--------------------------------------------------------------------------------
+Method:      POST
+Endpoint:    /api/hr/manager-assignments
+Auth:        Bearer Token (HR)
+
+Request Body (JSON):
+  - employeeId            [Long, Required] Active Employee User ID
+  - managerId             [Long, Required] Active Manager User ID
+  - performanceCycleId    [Long, Optional] Performance Cycle ID
+
+Sample Request:
+{
+  "employeeId": 4,
+  "managerId": 19,
+  "performanceCycleId": 1
+}
+
+Response Fields (201 Created):
+  - id                    [Long]    Assignment ID
+  - employeeId            [Long]    Employee ID
+  - employeeName          [String]  Employee Name
+  - employeeCode          [String]  Employee Code (e.g. EMP001)
+  - managerId             [Long]    Manager ID
+  - managerName           [String]  Manager Name
+  - managerCode           [String]  Manager Code (e.g. MGR007)
+  - performanceCycleId    [Long]    Cycle ID
+  - cycleName             [String]  Cycle Name
+  - active                [Boolean] true
+  - assignedDate          [String]  ISO Timestamp
+
+--------------------------------------------------------------------------------
+[API-17] GET ALL ASSIGNMENTS
+--------------------------------------------------------------------------------
+Method:      GET
+Endpoint:    /api/hr/manager-assignments
+Auth:        Bearer Token (HR)
+Response:    List of active AssignmentResponse objects.
+
+--------------------------------------------------------------------------------
+[API-18] UPDATE MANAGER ASSIGNMENT (REASSIGN)
+--------------------------------------------------------------------------------
+Method:      PUT
+Endpoint:    /api/hr/manager-assignments/{id}
+Auth:        Bearer Token (HR)
+Path Param:  id (Long, Required)
+
+Request Body (JSON):
+  - managerId             [Long,    Required] New Manager ID
+  - performanceCycleId    [Long,    Optional] Cycle ID
+  - active                [Boolean, Optional] true / false
+
+--------------------------------------------------------------------------------
+[API-19] DELETE / DEACTIVATE MANAGER ASSIGNMENT
+--------------------------------------------------------------------------------
+Method:      DELETE
+Endpoint:    /api/hr/manager-assignments/{id}
+Auth:        Bearer Token (HR)
+Path Param:  id (Long, Required)
+Response:    204 No Content
+
+================================================================================
+4. MANAGER GOAL APIS (ROLE: MANAGER)
+================================================================================
+
+--------------------------------------------------------------------------------
+[API-20] GET MANAGER DIRECT REPORTS (MY TEAM)
+--------------------------------------------------------------------------------
+Method:      GET
+Endpoint:    /api/manager/goals/team
+Auth:        Bearer Token (MANAGER)
+Response:    List of EmployeeResponse objects assigned to the logged-in manager.
+
+--------------------------------------------------------------------------------
+[API-21] ALLOCATE GOAL TO EMPLOYEE
+--------------------------------------------------------------------------------
+Method:      POST
+Endpoint:    /api/manager/goals
+Auth:        Bearer Token (MANAGER)
+
+Request Body (JSON):
+  - employeeId            [Long,       Required] Assigned direct report Employee ID
+  - cycleId               [Long,       Required] Active Cycle ID
+  - goalType              [GoalType,   Required] "OKR" or "KPI"
+  - goalScope             [GoalScope,  Optional] "INDIVIDUAL" (default), "DEPARTMENT", "COMPANY"
+  - parentGoalId          [Long,       Optional] Parent goal ID for alignment
+  - title                 [String,     Required] 3-200 chars, objective title
+  - description           [String,     Optional] Max 1000 chars
+  - target                [String,     Optional] Max 500 chars, metric target
+  - weight                [BigDecimal, Required] 1.00 to 100.00 (Total sum cannot exceed 100.00%)
+  - dueDate               [LocalDate,  Required] ISO format (yyyy-MM-dd)
+
+Sample Request:
+{
+  "employeeId": 4,
+  "cycleId": 1,
+  "goalType": "OKR",
+  "goalScope": "INDIVIDUAL",
+  "title": "Migrate Monolith Auth to Microservices OAuth2",
+  "description": "Implement Spring Security 6 with JWT tokens and Redis session store",
+  "target": "Zero downtime and 99.9% authentication uptime",
+  "weight": 35.00,
+  "dueDate": "2026-11-30"
+}
+
+Response Fields (201 Created):
+  - id                    [Long]       Goal ID
+  - cycleId               [Long]       Cycle ID
+  - employeeId            [Long]       Employee ID
+  - employeeName          [String]     Employee Name
+  - managerId             [Long]       Manager ID
+  - managerName           [String]     Manager Name
+  - goalType              [String]     "OKR" / "KPI"
+  - goalScope             [String]     "INDIVIDUAL"
+  - title                 [String]     Title
+  - description           [String]     Description
+  - target                [String]     Target
+  - weight                [BigDecimal] 35.00
+  - dueDate               [LocalDate]  2026-11-30
+  - status                [String]     "PENDING_ACCEPTANCE"
+  - progress              [Integer]    0
+  - employeeAccepted      [Boolean]    false
+  - modificationRequested [Boolean]    false
+  - createdAt             [String]     ISO Timestamp
+
+--------------------------------------------------------------------------------
+[API-22] GET ALL MANAGED GOALS
+--------------------------------------------------------------------------------
+Method:      GET
+Endpoint:    /api/manager/goals
+Auth:        Bearer Token (MANAGER)
+Response:    List of all GoalResponse objects created by this manager.
+
+--------------------------------------------------------------------------------
+[API-23] GET GOALS FOR SPECIFIC EMPLOYEE IN CYCLE
+--------------------------------------------------------------------------------
+Method:      GET
+Endpoint:    /api/manager/goals/employee/{employeeId}?cycleId={cycleId}
+Auth:        Bearer Token (MANAGER)
+Path Param:  employeeId (Long, Required)
+Query Param: cycleId (Long, Required)
+
+--------------------------------------------------------------------------------
+[API-24] UPDATE GOAL
+--------------------------------------------------------------------------------
+Method:      PUT
+Endpoint:    /api/manager/goals/{id}
+Auth:        Bearer Token (MANAGER)
+Path Param:  id (Long, Required)
+
+Request Body (JSON):
+  - title                 [String,     Required]
+  - description           [String,     Optional]
+  - target                [String,     Optional]
+  - weight                [BigDecimal, Required]
+  - dueDate               [LocalDate,  Required]
+
+--------------------------------------------------------------------------------
+[API-25] DELETE GOAL (ONLY IF 0% PROGRESS)
+--------------------------------------------------------------------------------
+Method:      DELETE
+Endpoint:    /api/manager/goals/{id}
+Auth:        Bearer Token (MANAGER)
+Path Param:  id (Long, Required)
+Response:    204 No Content
+
+--------------------------------------------------------------------------------
+[API-26] GET PENDING GOAL MODIFICATION REQUESTS
+--------------------------------------------------------------------------------
+Method:      GET
+Endpoint:    /api/manager/goal-modification-requests?status=PENDING
+Auth:        Bearer Token (MANAGER)
+Query Param: status (Optional, e.g. PENDING, APPROVED, REJECTED)
+
+--------------------------------------------------------------------------------
+[API-27] APPROVE GOAL MODIFICATION REQUEST
+--------------------------------------------------------------------------------
+Method:      PATCH
+Endpoint:    /api/manager/goal-modification-requests/{id}/approve
+Auth:        Bearer Token (MANAGER)
+Path Param:  id (Long, Required, Modification Request ID)
+
+Request Body (JSON):
+  - comment               [String, Optional] Manager approval remarks
+
+Sample Request:
+{
+  "comment": "Approved. Due date extended by 2 weeks."
+}
+
+--------------------------------------------------------------------------------
+[API-28] REJECT GOAL MODIFICATION REQUEST
+--------------------------------------------------------------------------------
+Method:      PATCH
+Endpoint:    /api/manager/goal-modification-requests/{id}/reject
+Auth:        Bearer Token (MANAGER)
+Path Param:  id (Long, Required, Modification Request ID)
+
+Request Body (JSON):
+  - comment               [String, Optional] Reason for rejection
+
+Sample Request:
+{
+  "comment": "Rejected. Q3 release deliverables cannot be postponed."
+}
+
+================================================================================
+5. EMPLOYEE GOAL APIS (ROLE: EMPLOYEE)
+================================================================================
+
+--------------------------------------------------------------------------------
+[API-29] GET MY ASSIGNED REPORTING MANAGER
+--------------------------------------------------------------------------------
+Method:      GET
+Endpoint:    /api/employee/goals/my-manager
+Auth:        Bearer Token (EMPLOYEE)
+Response:    Returns AssignmentResponse with managerName, managerEmployeeCode.
+
+--------------------------------------------------------------------------------
+[API-30] GET MY GOALS
+--------------------------------------------------------------------------------
+Method:      GET
+Endpoint:    /api/employee/goals?cycleId=1
+Auth:        Bearer Token (EMPLOYEE)
+Query Param: cycleId (Long, Optional)
+Response:    List of EmployeeGoalResponse objects.
+
+--------------------------------------------------------------------------------
+[API-31] ACCEPT ASSIGNED GOAL
+--------------------------------------------------------------------------------
+Method:      PATCH
+Endpoint:    /api/employee/goals/{goalId}/accept
+Auth:        Bearer Token (EMPLOYEE)
+Path Param:  goalId (Long, Required)
+Response:    Transitions status to ACCEPTED (employeeAccepted=true).
+
+--------------------------------------------------------------------------------
+[API-32] UPDATE GOAL PROGRESS (0% TO 100%)
+--------------------------------------------------------------------------------
+Method:      PATCH
+Endpoint:    /api/employee/goals/{goalId}/progress
+Auth:        Bearer Token (EMPLOYEE)
+Path Param:  goalId (Long, Required)
+
+Request Body (JSON):
+  - progress              [Integer, Required] 0 to 100 percentage
+  - comment               [String,  Optional] Notes / remarks
+
+Sample Request:
+{
+  "progress": 75,
+  "comment": "OAuth2 filters and token validation services completed"
+}
+
+Status Transitions:
+  - progress = 100        -> Status becomes "COMPLETED" (completedAt recorded)
+  - 0 < progress < 100    -> Status becomes "IN_PROGRESS"
+
+--------------------------------------------------------------------------------
+[API-33] REQUEST GOAL MODIFICATION
+--------------------------------------------------------------------------------
+Method:      PATCH
+Endpoint:    /api/employee/goals/{goalId}/modification-request
+Auth:        Bearer Token (EMPLOYEE)
+Path Param:  goalId (Long, Required)
+
+Request Body (JSON):
+  - requestedChanges      [String, Required] 5-1000 chars, description of changes
+  - comment               [String, Optional] Max 1000 chars, reasoning
+
+Sample Request:
+{
+  "requestedChanges": "Requesting 2 weeks deadline extension due to Redis upgrade",
+  "comment": "All backend filters are written, awaiting infrastructure approval"
+}
+
+Response Fields (200 OK):
+  - id                    [Long]   Modification Request ID
+  - goalId                [Long]   Goal ID
+  - goalTitle             [String] Goal Title
+  - employeeId            [Long]   Employee ID
+  - managerId             [Long]   Manager ID
+  - requestedChanges      [String] Requested Changes
+  - comment               [String] Comment
+  - status                [String] "PENDING"
+  - requestedAt           [String] ISO Timestamp
+
+--------------------------------------------------------------------------------
+[API-34] GET MY MODIFICATION REQUESTS
+--------------------------------------------------------------------------------
+Method:      GET
+Endpoint:    /api/employee/goals/modification-requests
+Auth:        Bearer Token (EMPLOYEE)
+Response:    List of GoalModificationResponse objects submitted by this employee.
+
+================================================================================
+6. ADVANCED DYNAMIC SEARCH & FILTERING APIS
+================================================================================
+
+--------------------------------------------------------------------------------
+[API-35] DYNAMIC EMPLOYEE SEARCH (PAGINATED & SORTED)
+--------------------------------------------------------------------------------
+Method:      GET
+Endpoint:    /api/employees/search
+Auth:        Bearer Token (Any Authenticated User)
+
+Query Parameters:
+  - search                [String,  Optional] Global keyword across name/email/code/skills
+  - name                  [String,  Optional] Filter by partial name
+  - email                 [String,  Optional] Filter by partial email
+  - employeeCode          [String,  Optional] Exact code (e.g. EMP001)
+  - departmentId          [Long,    Optional] Department ID
+  - role                  [Role,    Optional] HR, MANAGER, EMPLOYEE
+  - skill                 [String,  Optional] Skill substring (e.g. "Java")
+  - domain                [String,  Optional] Domain (e.g. "Engineering")
+  - location              [String,  Optional] Location (e.g. "Hyderabad")
+  - minExperience         [Integer, Optional] Minimum years of experience
+  - maxExperience         [Integer, Optional] Maximum years of experience
+  - active                [Boolean, Optional] Filter by active status (default: true)
+  - page                  [Integer, Optional] 0-based page index (default: 0)
+  - size                  [Integer, Optional] Page size (1 to 100, default: 10)
+  - sortBy                [String,  Optional] Field name (default: "name")
+                                              Allowed: id, name, email, employeeCode,
+                                              experienceYears, location, skill, domain
+  - direction             [String,  Optional] "asc" (default) or "desc"
+
+Response Fields (PagedResponse<EmployeeResponse>):
+  - content               [List]    Matching EmployeeResponse objects for page
+  - page                  [Integer] Current page (0-based)
+  - size                  [Integer] Page size
+  - totalElements         [Long]    Total records matching criteria in database
+  - totalPages            [Integer] Total pages available
+  - first                 [Boolean] true if on first page
+  - last                  [Boolean] true if on last page
+
+--------------------------------------------------------------------------------
+[API-36] SEARCH MANAGED GOALS
+--------------------------------------------------------------------------------
+Method:      GET
+Endpoint:    /api/manager/goals/search
+Auth:        Bearer Token (MANAGER)
+
+Query Parameters:
+  - status                [GoalStatus, Optional] PENDING_ACCEPTANCE, ACCEPTED, IN_PROGRESS, COMPLETED, REJECTED
+  - goalType              [GoalType,   Optional] OKR, KPI
+  - title                 [String,     Optional] Partial title search
+  - minWeight             [BigDecimal, Optional] Minimum weight
+  - maxWeight             [BigDecimal, Optional] Maximum weight
+  - page                  [Integer,    Optional] 0-based page index
+  - size                  [Integer,    Optional] Page size
+  - sortBy                [String,     Optional] dueDate, weight, progress, status, createdAt
+  - direction             [String,     Optional] asc / desc
+
+--------------------------------------------------------------------------------
+[API-37] SEARCH PERFORMANCE CYCLES
+--------------------------------------------------------------------------------
+Method:      GET
+Endpoint:    /api/hr/performance-cycles/search
+Auth:        Bearer Token (HR / MANAGER / EMPLOYEE)
+
+Query Parameters:
+  - name                  [String,      Optional] Partial cycle name
+  - status                [CycleStatus, Optional] DRAFT, ACTIVE, CLOSED
+  - page                  [Integer,     Optional] 0-based page index
+  - size                  [Integer,     Optional] Page size
+  - sortBy                [String,      Optional] startDate, name, createdAt
+  - direction             [String,      Optional] asc / desc
+
+================================================================================
+                              END OF SPECIFICATION
+================================================================================

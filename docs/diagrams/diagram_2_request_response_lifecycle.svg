@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1350 1450" width="1350" height="1450" style="background:#09090b; font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
+  <defs>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#818cf8"/>
+    </linearGradient>
+    <linearGradient id="boxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18181b"/>
+      <stop offset="100%" stop-color="#121215"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#818cf8"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#34d399"/>
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f87171"/>
+    </marker>
+  </defs>
+
+  <!-- Title Banner -->
+  <rect x="50" y="25" width="1250" height="85" rx="16" fill="#18181b" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="675" y="62" text-anchor="middle" fill="url(#headerGrad)" font-size="24" font-weight="800" letter-spacing="0.5">END-TO-END HTTP REQUEST &amp; RESPONSE LIFECYCLE</text>
+  <text x="675" y="88" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="500">From Next.js 16 UI • Validation • @Transactional Service • PostgreSQL • Standardized Envelope</text>
+
+  <!-- Lifeline Columns -->
+  <!-- Col 1: Client / Next.js -->
+  <g transform="translate(80, 140)">
+    <rect width="180" height="55" rx="10" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.8"/>
+    <text x="90" y="33" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">💻 Next.js 16 Client</text>
+    <line x1="90" y1="55" x2="90" y2="1240" stroke="rgba(99,102,241,0.3)" stroke-width="1.5" stroke-dasharray="6,6"/>
+  </g>
+
+  <!-- Col 2: Security & Correlation -->
+  <g transform="translate(320, 140)">
+    <rect width="180" height="55" rx="10" fill="#1e1b4b" stroke="#818cf8" stroke-width="1.8"/>
+    <text x="90" y="33" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">🛡️ Filter Chain (MDC/JWT)</text>
+    <line x1="90" y1="55" x2="90" y2="1240" stroke="rgba(129,140,248,0.3)" stroke-width="1.5" stroke-dasharray="6,6"/>
+  </g>
+
+  <!-- Col 3: REST Controller & Validator -->
+  <g transform="translate(560, 140)">
+    <rect width="190" height="55" rx="10" fill="#1e1b4b" stroke="#a855f7" stroke-width="1.8"/>
+    <text x="95" y="33" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">🎮 Controller &amp; @Valid</text>
+    <line x1="95" y1="55" x2="95" y2="1240" stroke="rgba(168,85,247,0.3)" stroke-width="1.5" stroke-dasharray="6,6"/>
+  </g>
+
+  <!-- Col 4: Service Layer -->
+  <g transform="translate(810, 140)">
+    <rect width="190" height="55" rx="10" fill="#1e1b4b" stroke="#ec4899" stroke-width="1.8"/>
+    <text x="95" y="33" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">⚙️ Service Layer</text>
+    <line x1="95" y1="55" x2="95" y2="1240" stroke="rgba(236,72,153,0.3)" stroke-width="1.5" stroke-dasharray="6,6"/>
+  </g>
+
+  <!-- Col 5: Database (PostgreSQL) -->
+  <g transform="translate(1060, 140)">
+    <rect width="180" height="55" rx="10" fill="#1e1b4b" stroke="#38bdf8" stroke-width="1.8"/>
+    <text x="90" y="33" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">🐘 PostgreSQL DB</text>
+    <line x1="90" y1="55" x2="90" y2="1240" stroke="rgba(56,189,248,0.3)" stroke-width="1.5" stroke-dasharray="6,6"/>
+  </g>
+
+  <!-- Step 1: User Action -->
+  <line x1="170" y1="230" x2="410" y2="230" stroke="#818cf8" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="185" y="208" width="210" height="22" rx="4" fill="#0f0f14" stroke="rgba(255,255,255,0.1)"/>
+  <text x="290" y="223" text-anchor="middle" fill="#e0e7ff" font-size="11" font-weight="600">1. POST /api/manager/goals + JWT</text>
+
+  <!-- Step 2: Correlation ID & JWT Check -->
+  <rect x="410" y="250" width="160" height="45" rx="6" fill="#18181b" stroke="#6366f1" stroke-width="1.2"/>
+  <text x="490" y="268" text-anchor="middle" fill="#a5b4fc" font-size="10" font-weight="700">CorrelationIdFilter (MDC)</text>
+  <text x="490" y="284" text-anchor="middle" fill="#cbd5e1" font-size="10">Generates X-Request-ID</text>
+
+  <!-- Step 3: Pass to Controller -->
+  <line x1="410" y1="320" x2="655" y2="320" stroke="#818cf8" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="440" y="300" width="185" height="20" rx="4" fill="#0f0f14" stroke="rgba(255,255,255,0.1)"/>
+  <text x="532" y="314" text-anchor="middle" fill="#e0e7ff" font-size="11">2. Dispatches to Controller</text>
+
+  <!-- Step 4: Jakarta Bean Validation -->
+  <rect x="655" y="340" width="180" height="40" rx="6" fill="#18181b" stroke="#a855f7" stroke-width="1.2"/>
+  <text x="745" y="358" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="700">@Valid Request Record</text>
+  <text x="745" y="372" text-anchor="middle" fill="#cbd5e1" font-size="9.5">Checks @NotNull, @DecimalMin</text>
+
+  <!-- Validation Failure Branch (Alt 1) -->
+  <rect x="120" y="410" width="1120" height="90" rx="10" fill="rgba(239,68,68,0.05)" stroke="#ef4444" stroke-width="1" stroke-dasharray="5,5"/>
+  <text x="140" y="430" fill="#f87171" font-size="11" font-weight="700">[ALT: Bean Validation Fails]</text>
+  <line x1="655" y1="460" x2="170" y2="460" stroke="#f87171" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrowRed)"/>
+  <rect x="260" y="445" width="300" height="22" rx="4" fill="#271418" stroke="#ef4444" stroke-width="1"/>
+  <text x="410" y="460" text-anchor="middle" fill="#fca5a5" font-size="11" font-weight="700">400 Bad Request { success: false, message: "Validation error" }</text>
+
+  <!-- Step 5: Service Layer Invocation -->
+  <line x1="655" y1="540" x2="905" y2="540" stroke="#818cf8" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="685" y="520" width="190" height="20" rx="4" fill="#0f0f14" stroke="rgba(255,255,255,0.1)"/>
+  <text x="780" y="534" text-anchor="middle" fill="#e0e7ff" font-size="11">3. managerGoalService.createGoal()</text>
+
+  <!-- Step 6: Domain Rule Check -->
+  <rect x="905" y="565" width="210" height="50" rx="6" fill="#18181b" stroke="#ec4899" stroke-width="1.2"/>
+  <text x="1010" y="585" text-anchor="middle" fill="#f472b6" font-size="10.5" font-weight="700">Domain Rule Check</text>
+  <text x="1010" y="602" text-anchor="middle" fill="#cbd5e1" font-size="10">Sum(Goal Weights) ≤ 100.00%</text>
+
+  <!-- Weight Exceeded Branch (Alt 2) -->
+  <rect x="120" y="640" width="1120" height="90" rx="10" fill="rgba(239,68,68,0.05)" stroke="#ef4444" stroke-width="1" stroke-dasharray="5,5"/>
+  <text x="140" y="660" fill="#f87171" font-size="11" font-weight="700">[ALT: Business Rule Violated (Weight &gt; 100%)]</text>
+  <line x1="905" y1="695" x2="170" y2="695" stroke="#f87171" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrowRed)"/>
+  <rect x="240" y="680" width="380" height="22" rx="4" fill="#271418" stroke="#ef4444" stroke-width="1"/>
+  <text x="430" y="695" text-anchor="middle" fill="#fca5a5" font-size="11" font-weight="700">400 Bad Request { message: "Total goal weight cannot exceed 100%" }</text>
+
+  <!-- Step 7: Database Persistence -->
+  <line x1="905" y1="770" x2="1150" y2="770" stroke="#34d399" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <rect x="940" y="750" width="180" height="20" rx="4" fill="#0f0f14" stroke="rgba(255,255,255,0.1)"/>
+  <text x="1030" y="764" text-anchor="middle" fill="#6ee7b7" font-size="11">4. goalRepository.save(goal)</text>
+
+  <!-- Step 8: SQL Insert -->
+  <rect x="1060" y="795" width="180" height="40" rx="6" fill="#18181b" stroke="#38bdf8" stroke-width="1.2"/>
+  <text x="1150" y="813" text-anchor="middle" fill="#38bdf8" font-size="10" font-weight="700">SQL Execution</text>
+  <text x="1150" y="827" text-anchor="middle" fill="#cbd5e1" font-size="9.5">INSERT INTO goals (...) VALUES (...)</text>
+
+  <!-- Step 9: SQL Return -->
+  <line x1="1150" y1="860" x2="905" y2="860" stroke="#34d399" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrowGreen)"/>
+  <text x="1030" y="854" text-anchor="middle" fill="#34d399" font-size="10.5">Returns Persisted JPA Entity</text>
+
+  <!-- Step 10: DTO Mapping -->
+  <rect x="905" y="885" width="190" height="40" rx="6" fill="#18181b" stroke="#ec4899" stroke-width="1.2"/>
+  <text x="1000" y="903" text-anchor="middle" fill="#f472b6" font-size="10" font-weight="700">Entity → DTO Mapping</text>
+  <text x="1000" y="917" text-anchor="middle" fill="#cbd5e1" font-size="9.5">GoalResponse Record Created</text>
+
+  <!-- Step 11: Return to Controller -->
+  <line x1="905" y1="950" x2="655" y2="950" stroke="#34d399" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrowGreen)"/>
+  <text x="780" y="944" text-anchor="middle" fill="#34d399" font-size="11">5. Returns GoalResponse</text>
+
+  <!-- Step 12: Standard Envelope Response -->
+  <line x1="655" y1="1000" x2="170" y2="1000" stroke="#34d399" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+  <rect x="230" y="980" width="370" height="24" rx="4" fill="#0b291b" stroke="#10b981" stroke-width="1.2"/>
+  <text x="415" y="996" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700">6. 201 Created • ApiResponse&lt;GoalResponse&gt; [Header: X-Request-ID]</text>
+
+  <!-- Step 13: UI Reactive Re-render -->
+  <rect x="70" y="1045" width="200" height="55" rx="8" fill="#18181b" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="170" y="1067" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="700">7. UI Re-renders Reactively</text>
+  <text x="170" y="1085" text-anchor="middle" fill="#a5b4fc" font-size="10">• Goal Progress Meter updates • Toast alert</text>
+
+  <!-- Legend & Notes at Bottom -->
+  <rect x="50" y="1140" width="1250" height="150" rx="14" fill="#121216" stroke="rgba(255,255,255,0.1)" stroke-width="1.2"/>
+  <text x="80" y="1170" fill="#f8fafc" font-size="14" font-weight="700">KEY ARCHITECTURAL HIGHLIGHTS:</text>
+  <text x="80" y="1195" fill="#cbd5e1" font-size="12.5">• <tspan font-weight="700" fill="#34d399">Standardized Envelopes</tspan>: 100% of endpoints return ApiResponse&lt;T&gt; (data, success, message, timestamp) or PagedResponse&lt;T&gt;.</text>
+  <text x="80" y="1220" fill="#cbd5e1" font-size="12.5">• <tspan font-weight="700" fill="#f87171">Centralized Exception Handling</tspan>: Handled by GlobalExceptionHandler (@RestControllerAdvice) with no stack traces leaked.</text>
+  <text x="80" y="1245" fill="#cbd5e1" font-size="12.5">• <tspan font-weight="700" fill="#818cf8">Observability</tspan>: All responses append the X-Request-ID generated by CorrelationIdFilter for distributed tracing.</text>
+</svg>

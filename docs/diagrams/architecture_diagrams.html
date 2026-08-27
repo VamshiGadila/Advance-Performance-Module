@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASCEND - Interactive Architecture & Flow Diagrams</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Mermaid.js -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg-page: #060608;
+            --bg-surface: rgba(18, 18, 24, 0.9);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --border: rgba(255, 255, 255, 0.12);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-page);
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 60%),
+                radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 100% 100%, 28px 28px;
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Top Header */
+        header {
+            height: 70px;
+            min-height: 70px;
+            background: var(--bg-surface);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 28px;
+            z-index: 50;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #6366f1, #4338ca);
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .brand-text h1 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+
+        .brand-text p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 5px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 8px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Floating Controls */
+        .zoom-controls {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            background: var(--bg-surface);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .control-btn:hover {
+            background: var(--primary);
+            color: #ffffff;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .zoom-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            padding: 0 8px;
+            min-width: 55px;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .hint-badge {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            background: rgba(18, 18, 24, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            padding: 9px 18px;
+            border-radius: 20px;
+            font-size: 0.825rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* Viewport Canvas */
+        .viewport {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            height: calc(100vh - 70px);
+            cursor: grab;
+        }
+
+        .viewport:active {
+            cursor: grabbing;
+        }
+
+        .canvas {
+            position: absolute;
+            transform-origin: 0 0;
+            will-change: transform;
+            display: inline-block;
+            padding: 40px;
+        }
+
+        .diagram-view {
+            display: none;
+        }
+
+        .diagram-view.active {
+            display: block;
+        }
+
+        /* High-contrast crisp diagram nodes */
+        .diagram-view svg {
+            filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.5));
+        }
+
+        .diagram-view .node rect, 
+        .diagram-view .node polygon, 
+        .diagram-view .node circle {
+            stroke-width: 2px !important;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: var(--bg-page);
+            z-index: 40;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <div class="brand-logo">A</div>
+            <div class="brand-text">
+                <h1>ASCEND Architecture Explorer</h1>
+                <p>Interactive Pan & Zoom Visuals</p>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchDiagram(0)">🛡️ Complete Filter Pipeline</button>
+            <button class="tab-btn" onclick="switchDiagram(1)">🔄 Request / Response</button>
+            <button class="tab-btn" onclick="switchDiagram(2)">🔎 JPA Search Flow</button>
+            <button class="tab-btn" onclick="switchDiagram(3)">🤝 Goal Modification State</button>
+        </div>
+    </header>
+
+    <div class="hint-badge">
+        <span>💡</span>
+        <span>Scroll Wheel to Zoom &bull; Click & Drag to Pan &bull; ↺ to Reset</span>
+    </div>
+
+    <div class="zoom-controls">
+        <button class="control-btn" onclick="zoomIn()" title="Zoom In">+</button>
+        <span id="zoom-label" class="zoom-label">100%</span>
+        <button class="control-btn" onclick="zoomOut()" title="Zoom Out">&minus;</button>
+        <button class="control-btn" onclick="resetView()" title="Reset View">↺</button>
+        <button class="control-btn" onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
+    </div>
+
+    <main class="viewport" id="viewport">
+        <div id="loading" class="loading-overlay">Generating interactive diagrams...</div>
+
+        <div class="canvas" id="canvas">
+            <!-- DIAGRAM 0: Complete Filter Chain with CorrelationIdFilter -->
+            <div id="view-0" class="diagram-view active">
+                <pre class="mermaid">
+flowchart TD
+    Client["🌐 Client Request<br/>Header: Authorization Bearer JWT<br/>Optional Header: X-Request-ID"]
+
+    subgraph FilterPipeline ["🛡️ Spring Boot Web & Security Filter Pipeline"]
+        CorrelationFilter["1. CorrelationIdFilter (HIGHEST_PRECEDENCE)<br/>• Extracts incoming X-Request-ID or generates UUID<br/>• Sets SLF4J MDC.put('requestId', correlationId)<br/>• Appends response.setHeader('X-Request-ID', correlationId)<br/>• finally { MDC.remove('requestId') }"]
+
+        CORS["2. CorsFilter<br/>• Origin: http://localhost:3000<br/>• Headers: Authorization, Content-Type, X-Request-ID<br/>• Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS"]
+        
+        IsPublic{"3. Is Public Route?<br/>/api/auth/**, /swagger-ui/**"}
+        
+        JWTFilter["4. JwtAuthenticationFilter (OncePerRequestFilter)<br/>• Extracts Bearer Token from Authorization Header<br/>• Verifies HMAC-SHA Signature & Expiration"]
+        
+        ExtractClaims["5. Extract User Claims<br/>• Subject / User ID (e.g. 53)<br/>• Email (karthik.srinivasan@ascend.local)<br/>• Role (ROLE_MANAGER)"]
+        
+        PopulateContext["6. Populate SecurityContextHolder<br/>UsernamePasswordAuthenticationToken(principal, credentials, authorities)"]
+        
+        AuthFilter["7. AuthorizationFilter<br/>Enforces URL Security Matchers (/api/hr/**, /api/manager/**, /api/employee/**)"]
+        
+        PreAuth{"8. Method Security Check<br/>@PreAuthorize hasRole MANAGER"}
+        
+        Err401["⛔ 401 Unauthorized<br/>Invalid or Expired JWT Token"]
+        Err403["⛔ 403 Forbidden<br/>Insufficient Role Privileges"]
+    end
+
+    Controller["🎯 Target REST Controller (e.g. ManagerGoalController)"]
+    ServiceLayer["⚙️ Transactional Service Layer (SecurityUtils + MDC Tracing)"]
+
+    Client --> CorrelationFilter
+    CorrelationFilter --> CORS
+    CORS --> IsPublic
+    
+    IsPublic -->|YES Public| Controller
+    IsPublic -->|NO Protected| JWTFilter
+    
+    JWTFilter --> ExtractClaims
+    JWTFilter -.->|Invalid Signature| Err401
+    
+    ExtractClaims --> PopulateContext
+    PopulateContext --> AuthFilter
+    
+    AuthFilter --> PreAuth
+    PreAuth -->|Role Mismatch| Err403
+    PreAuth -->|Role Verified| Controller
+    
+    Controller --> ServiceLayer
+    
+    Err401 --> Client
+    Err403 --> Client
+                </pre>
+            </div>
+
+            <!-- DIAGRAM 1: Request / Response Lifecycle -->
+            <div id="view-1" class="diagram-view">
+                <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor User as 👤 User (Browser UI)
+    participant NextJS as 💻 Next.js 16 (App Router)
+    participant CorrFilter as 🆔 CorrelationIdFilter (MDC)
+    participant Filter as 🛡️ Security Filter Chain (JWT)
+    participant Ctrl as 🎮 REST Controller (@RestController)
+    participant Val as 🏷️ Jakarta Validator (@Valid)
+    participant Svc as ⚙️ Business Service (@Transactional)
+    participant Repo as 🗄️ JPA Repository
+    participant DB as 🐘 PostgreSQL Database
+    participant ExHandler as 🚨 GlobalExceptionHandler
+
+    User->>NextJS: Performs Action (Assign Goal / Update Progress)
+    NextJS->>CorrFilter: HTTP Request [POST /api/manager/goals + JWT + JSON]
+    CorrFilter->>CorrFilter: Generates X-Request-ID UUID & Puts in SLF4J MDC
+    CorrFilter->>Filter: Proceeds down Filter Chain
+    Filter->>Filter: Validates Token & Injects SecurityContext
+
+    Filter->>Ctrl: Dispatches to Controller Method
+    Ctrl->>Val: Executes @Valid Bean Validation
+
+    alt Validation Constraint Fails (@NotNull, @DecimalMin)
+        Val-->>ExHandler: Throws MethodArgumentNotValidException
+        ExHandler-->>NextJS: 400 Bad Request { success: false, message: "Validation error" }
+        NextJS-->>User: Highlights invalid input field in UI
+    else Validation Passes
+        Ctrl->>Svc: Invokes managerGoalService.createGoal(request)
+        Svc->>Svc: Obtains Manager ID from SecurityUtils.getCurrentUserId()
+        Svc->>Svc: Enforces Domain Rule: Sum of weights <= 100.00%
+
+        alt Weight Exceeds 100%
+            Svc-->>ExHandler: Throws BadRequestException("Total goal weight cannot exceed 100%")
+            ExHandler-->>NextJS: 400 Bad Request { success: false, message: "Weight exceeds 100%" }
+            NextJS-->>User: Displays Toast Banner "Weight exceeds 100%"
+        else Business Rules Validated
+            Svc->>Repo: Saves new Goal entity via goalRepository.save(goal)
+            Repo->>DB: Executes SQL: INSERT INTO goals (...) VALUES (...)
+            DB-->>Repo: Returns generated Primary Key & Timestamps
+            Repo-->>Svc: Returns Persisted JPA Entity
+            Svc->>Svc: Maps Entity to Immutable GoalResponse Record DTO
+            Svc-->>Ctrl: Returns DTO
+            Ctrl-->>NextJS: 201 Created wrapped in ApiResponse (Header: X-Request-ID)
+            NextJS->>NextJS: Re-renders reactive state
+            NextJS-->>User: Displays Success Toast & Updates Goal Meter
+        end
+    end
+                </pre>
+            </div>
+
+            <!-- DIAGRAM 2: JPA Search Flow -->
+            <div id="view-2" class="diagram-view">
+                <pre class="mermaid">
+flowchart LR
+    subgraph ClientReq ["1. Client Request"]
+        URL["GET /api/employees/search<br/>?search=Daniel&role=EMPLOYEE&dept=1<br/>&page=0&size=10&sortBy=name&direction=asc"]
+    end
+
+    subgraph DTOBinding ["2. Criteria DTO Binding"]
+        Criteria["EmployeeSearchCriteria Record<br/>• search: Daniel<br/>• role: EMPLOYEE<br/>• departmentId: 1<br/>• page: 0, size: 10<br/>• sortBy: name, dir: asc"]
+    end
+
+    subgraph JPASpec ["3. Dynamic Criteria Builder"]
+        Spec["EmployeeSpecification.filterBy(criteria)"]
+        Pred1["Pred 1: LOWER(name) LIKE '%daniel%'<br/>OR LOWER(email) LIKE '%daniel%'"]
+        Pred2["Pred 2: role = 'EMPLOYEE'"]
+        Pred3["Pred 3: department_id = 1"]
+        Pageable["PageRequest.of(0, 10, Sort.by('name').ascending())"]
+    end
+
+    subgraph SQLExecution ["4. Database Execution"]
+        SQL["PostgreSQL Query:<br/>SELECT u.* FROM users u<br/>WHERE (LOWER(u.name) LIKE '%daniel%' OR LOWER(u.email) LIKE '%daniel%')<br/>AND u.role = 'EMPLOYEE'<br/>AND u.department_id = 1<br/>ORDER BY u.name ASC<br/>LIMIT 10 OFFSET 0;"]
+        CountSQL["Count Query:<br/>SELECT COUNT(*) FROM users u WHERE ...;"]
+    end
+
+    subgraph Envelope ["5. Response Envelope"]
+        Output["PagedResponse of EmployeeResponse<br/>• content: [ 10 Employee DTOs ]<br/>• page: 0, size: 10<br/>• totalElements: 38<br/>• totalPages: 4"]
+    end
+
+    URL --> Criteria
+    Criteria --> Spec
+    Spec --> Pred1 & Pred2 & Pred3
+    Pred1 & Pred2 & Pred3 --> Pageable
+    Pageable --> SQL & CountSQL
+    SQL & CountSQL --> Output
+                </pre>
+            </div>
+
+            <!-- DIAGRAM 3: Goal Modification State Machine -->
+            <div id="view-3" class="diagram-view">
+                <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor Emp as 💼 Employee (e.g. Vamshi / EMP038)
+    participant App as 🖥️ ASCEND Application
+    actor Mgr as 👔 Manager (e.g. Karthik / MGR015)
+
+    Note over Mgr,App: 1. Initial Goal Allocation
+    Mgr->>App: POST /api/manager/goals (Weight: 40%, Status: PENDING_ACCEPTANCE)
+    App-->>Emp: Goal renders in Employee Portal
+
+    alt Direct Acceptance Flow
+        Emp->>App: PATCH /api/employee/goals/{id}/accept
+        App->>App: Transition to ACCEPTED
+        Emp->>App: PATCH /api/employee/goals/{id}/progress (Progress: 100%)
+        App->>App: Transition to COMPLETED
+    else Modification Request Workflow
+        Emp->>App: PATCH /api/employee/goals/{id}/modification-request (Reason: Need 2-week extension)
+        App->>App: Transition to MODIFICATION_REQUESTED
+        App-->>Mgr: Appears in Manager Pending Modifications Panel
+
+        alt Manager Approves Request
+            Mgr->>App: PATCH /api/manager/goal-modification-requests/{id}/approve
+            App->>App: Goal parameters updated & Status reset to ACCEPTED
+            App-->>Emp: Employee dashboard reflects approved new targets
+        else Manager Rejects Request
+            Mgr->>App: PATCH /api/manager/goal-modification-requests/{id}/reject (Reason: Deadlines cannot be moved)
+            App->>App: Goal returns to previous active state (ACCEPTED / IN_PROGRESS)
+            App-->>Emp: Employee dashboard shows rejection comment
+        end
+    end
+                </pre>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentTab = 0;
+        let scale = 1;
+        let panX = 0;
+        let panY = 0;
+        let isDragging = false;
+        let startX, startY;
+
+        const viewport = document.getElementById('viewport');
+        const canvas = document.getElementById('canvas');
+        const zoomLabel = document.getElementById('zoom-label');
+
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark',
+            securityLevel: 'loose',
+            themeVariables: {
+                darkMode: true,
+                background: '#060608',
+                primaryColor: '#6366f1',
+                primaryTextColor: '#f8fafc',
+                primaryBorderColor: '#818cf8',
+                lineColor: '#94a3b8',
+                secondaryColor: '#1e1b4b',
+                tertiaryColor: '#141418',
+                fontFamily: 'Plus Jakarta Sans, sans-serif'
+            }
+        });
+
+        async function init() {
+            try {
+                await mermaid.run();
+                const loader = document.getElementById('loading');
+                if (loader) loader.style.display = 'none';
+
+                // Initial auto-fit
+                setTimeout(resetView, 100);
+            } catch (err) {
+                console.error("Mermaid render error:", err);
+                const loader = document.getElementById('loading');
+                if (loader) loader.style.display = 'none';
+            }
+        }
+
+        function updateTransform() {
+            canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+            zoomLabel.innerText = `${Math.round(scale * 100)}%`;
+        }
+
+        function resetView() {
+            const activeView = document.getElementById(`view-${currentTab}`);
+            if (!activeView) return;
+
+            const rect = activeView.getBoundingClientRect();
+            const vpRect = viewport.getBoundingClientRect();
+
+            // Calculate scale to comfortably fit in viewport (80% of width/height)
+            const scaleX = (vpRect.width * 0.85) / (activeView.offsetWidth || 800);
+            const scaleY = (vpRect.height * 0.85) / (activeView.offsetHeight || 600);
+            scale = Math.min(Math.max(Math.min(scaleX, scaleY), 0.5), 1.6);
+
+            // Center in viewport
+            panX = (vpRect.width - (activeView.offsetWidth * scale)) / 2;
+            panY = Math.max((vpRect.height - (activeView.offsetHeight * scale)) / 2, 20);
+
+            updateTransform();
+        }
+
+        function zoomIn() {
+            scale = Math.min(scale * 1.25, 4.0);
+            updateTransform();
+        }
+
+        function zoomOut() {
+            scale = Math.max(scale / 1.25, 0.25);
+            updateTransform();
+        }
+
+        function switchDiagram(index) {
+            currentTab = index;
+
+            // Update Tab Buttons
+            document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === index);
+            });
+
+            // Update Views
+            document.querySelectorAll('.diagram-view').forEach((view, i) => {
+                view.classList.toggle('active', i === index);
+            });
+
+            setTimeout(resetView, 30);
+        }
+
+        // Mouse Wheel Zoom centered at cursor
+        viewport.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
+            const newScale = Math.min(Math.max(scale * zoomFactor, 0.25), 4.5);
+
+            const rect = viewport.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            panX = mouseX - (mouseX - panX) * (newScale / scale);
+            panY = mouseY - (mouseY - panY) * (newScale / scale);
+            scale = newScale;
+
+            updateTransform();
+        }, { passive: false });
+
+        // Pan on Drag
+        viewport.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX - panX;
+            startY = e.clientY - panY;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            panX = e.clientX - startX;
+            panY = e.clientY - startY;
+            updateTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        window.addEventListener('load', init);
+        window.addEventListener('resize', resetView);
+    </script>
+</body>
+</html>

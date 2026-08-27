@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1350 1150" width="1350" height="1150" style="background:#09090b; font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
+  <defs>
+    <linearGradient id="headerGrad4" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+    <linearGradient id="boxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18181b"/>
+      <stop offset="100%" stop-color="#121215"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+    <marker id="arrowGold" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#fbbf24"/>
+    </marker>
+    <marker id="arrowGreen4" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#34d399"/>
+    </marker>
+    <marker id="arrowRed4" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f87171"/>
+    </marker>
+    <marker id="arrowPurple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#c084fc"/>
+    </marker>
+  </defs>
+
+  <!-- Title Banner -->
+  <rect x="50" y="25" width="1250" height="85" rx="16" fill="#18181b" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="675" y="62" text-anchor="middle" fill="url(#headerGrad4)" font-size="24" font-weight="800" letter-spacing="0.5">GOAL LIFECYCLE &amp; MODIFICATION STATE MACHINE</text>
+  <text x="675" y="88" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="500">Dual-Role Workflow • Employee Change Request Protocol • Manager Approval / Rejection</text>
+
+  <!-- Lifeline Columns -->
+  <!-- Col 1: Manager -->
+  <g transform="translate(140, 140)">
+    <rect width="240" height="55" rx="10" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.8"/>
+    <text x="120" y="33" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="700">👔 Manager (e.g. Karthik / MGR015)</text>
+    <line x1="120" y1="55" x2="120" y2="860" stroke="rgba(99,102,241,0.3)" stroke-width="1.5" stroke-dasharray="6,6"/>
+  </g>
+
+  <!-- Col 2: ASCEND Platform Engine -->
+  <g transform="translate(530, 140)">
+    <rect width="280" height="55" rx="10" fill="#1e1b4b" stroke="#818cf8" stroke-width="1.8"/>
+    <text x="140" y="33" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="700">🖥️ ASCEND Platform &amp; DB</text>
+    <line x1="140" y1="55" x2="140" y2="860" stroke="rgba(129,140,248,0.3)" stroke-width="1.5" stroke-dasharray="6,6"/>
+  </g>
+
+  <!-- Col 3: Employee -->
+  <g transform="translate(960, 140)">
+    <rect width="240" height="55" rx="10" fill="#1e1b4b" stroke="#34d399" stroke-width="1.8"/>
+    <text x="120" y="33" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="700">💼 Employee (e.g. Vamshi / EMP038)</text>
+    <line x1="120" y1="55" x2="120" y2="860" stroke="rgba(52,211,153,0.3)" stroke-width="1.5" stroke-dasharray="6,6"/>
+  </g>
+
+  <!-- Step 1: Manager Allocates Goal -->
+  <line x1="260" y1="230" x2="670" y2="230" stroke="#818cf8" stroke-width="2" marker-end="url(#arrowGold)"/>
+  <rect x="290" y="208" width="350" height="22" rx="4" fill="#0f0f14" stroke="rgba(255,255,255,0.1)"/>
+  <text x="465" y="223" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700">1. POST /api/manager/goals (Weight: 40%, PENDING_ACCEPTANCE)</text>
+
+  <!-- Step 2: Goal Appears in Employee Portal -->
+  <line x1="670" y1="260" x2="1080" y2="260" stroke="#818cf8" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrowGold)"/>
+  <text x="875" y="254" text-anchor="middle" fill="#a5b4fc" font-size="11">Goal card renders with "✓ Accept" &amp; "📝 Request Changes"</text>
+
+  <!-- Option A: Direct Acceptance Pathway -->
+  <rect x="100" y="295" width="1150" height="150" rx="12" fill="rgba(52,211,153,0.04)" stroke="#10b981" stroke-width="1.2"/>
+  <text x="120" y="318" fill="#34d399" font-size="12" font-weight="700">PATHWAY A: HAPPY PATH (DIRECT ACCEPTANCE &amp; PROGRESSION)</text>
+
+  <line x1="1080" y1="350" x2="670" y2="350" stroke="#34d399" stroke-width="2" marker-end="url(#arrowGreen4)"/>
+  <rect x="730" y="335" width="280" height="22" rx="4" fill="#0b291b" stroke="#10b981" stroke-width="1"/>
+  <text x="870" y="350" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700">PATCH /api/employee/goals/{id}/accept → ACCEPTED</text>
+
+  <line x1="1080" y1="400" x2="670" y2="400" stroke="#34d399" stroke-width="2" marker-end="url(#arrowGreen4)"/>
+  <rect x="705" y="385" width="330" height="22" rx="4" fill="#0b291b" stroke="#10b981" stroke-width="1"/>
+  <text x="870" y="400" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700">PATCH /api/employee/goals/{id}/progress (100%) → COMPLETED</text>
+
+  <!-- Option B: Modification Request Pathway -->
+  <rect x="100" y="470" width="1150" height="370" rx="12" fill="rgba(245,158,11,0.04)" stroke="#f59e0b" stroke-width="1.2"/>
+  <text x="120" y="495" fill="#fbbf24" font-size="12" font-weight="700">PATHWAY B: MODIFICATION REQUEST WORKFLOW</text>
+
+  <!-- Employee submits modification -->
+  <line x1="1080" y1="535" x2="670" y2="535" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrowGold)"/>
+  <rect x="690" y="520" width="370" height="22" rx="4" fill="#2d1c07" stroke="#f59e0b" stroke-width="1"/>
+  <text x="875" y="535" text-anchor="middle" fill="#fde68a" font-size="11" font-weight="700">PATCH .../modification-request → MODIFICATION_REQUESTED</text>
+
+  <!-- Notification to Manager -->
+  <line x1="670" y1="585" x2="260" y2="585" stroke="#fbbf24" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrowGold)"/>
+  <text x="465" y="578" text-anchor="middle" fill="#fde68a" font-size="11">Appears in Manager's Pending Modification Requests Tray</text>
+
+  <!-- Branch 1: Manager Approves -->
+  <line x1="260" y1="645" x2="670" y2="645" stroke="#34d399" stroke-width="2" marker-end="url(#arrowGreen4)"/>
+  <rect x="330" y="630" width="280" height="22" rx="4" fill="#0b291b" stroke="#10b981" stroke-width="1"/>
+  <text x="470" y="645" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700">✓ PATCH .../approve (Updates Due Date / Weight)</text>
+
+  <line x1="670" y1="685" x2="1080" y2="685" stroke="#34d399" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrowGreen4)"/>
+  <text x="875" y="678" text-anchor="middle" fill="#34d399" font-size="11">Status resets to ACCEPTED • Employee sees updated targets</text>
+
+  <!-- Branch 2: Manager Rejects -->
+  <line x1="260" y1="745" x2="670" y2="745" stroke="#f87171" stroke-width="2" marker-end="url(#arrowRed4)"/>
+  <rect x="300" y="340" width="340" height="22" rx="4" fill="#271418" stroke="#ef4444" stroke-width="1"/>
+  <text x="470" y="745" text-anchor="middle" fill="#fca5a5" font-size="11" font-weight="700">✗ PATCH .../reject { reviewComments: "Deadline locked" }</text>
+
+  <line x1="670" y1="785" x2="1080" y2="785" stroke="#f87171" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrowRed4)"/>
+  <text x="875" y="778" text-anchor="middle" fill="#f87171" font-size="11">Status returns to previous active state • Displays rejection reason</text>
+
+  <!-- Footer Key Notes -->
+  <rect x="50" y="880" width="1250" height="230" rx="14" fill="#121216" stroke="rgba(255,255,255,0.1)" stroke-width="1.2"/>
+  <text x="80" y="915" fill="#f8fafc" font-size="15" font-weight="700">BUSINESS INTEGRITY &amp; AUTHORIZATION RULES:</text>
+  <text x="80" y="945" fill="#cbd5e1" font-size="12.5">• <tspan font-weight="700" fill="#34d399">100% Weight Enactment</tspan>: Total employee goal weight must sum to 100.00% per cycle before completion.</text>
+  <text x="80" y="975" fill="#cbd5e1" font-size="12.5">• <tspan font-weight="700" fill="#fbbf24">Self-Service Adjustments</tspan>: Employees can request timeline/weight adjustments both BEFORE and AFTER initial acceptance.</text>
+  <text x="80" y="1005" fill="#cbd5e1" font-size="12.5">• <tspan font-weight="700" fill="#f87171">Team Boundary Security</tspan>: Managers can only approve/reject modification requests for employees actively assigned to their team.</text>
+  <text x="80" y="1035" fill="#cbd5e1" font-size="12.5">• <tspan font-weight="700" fill="#818cf8">Audit Trail</tspan>: Every modification request logs creation timestamp, review timestamp, requester comments, and reviewer remarks.</text>
+</svg>

@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1350 950" width="1350" height="950" style="background:#09090b; font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
+  <defs>
+    <linearGradient id="headerGrad3" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <linearGradient id="boxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18181b"/>
+      <stop offset="100%" stop-color="#121215"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+    <marker id="arrow3" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#34d399"/>
+    </marker>
+  </defs>
+
+  <!-- Title Banner -->
+  <rect x="50" y="25" width="1250" height="85" rx="16" fill="#18181b" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="675" y="62" text-anchor="middle" fill="url(#headerGrad3)" font-size="24" font-weight="800" letter-spacing="0.5">SPRING DATA JPA SPECIFICATIONS &amp; DYNAMIC SEARCH PIPELINE</text>
+  <text x="675" y="88" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="500">Multi-Attribute Search • Type-Safe Criteria API Predicates • Database-Level Limit/Offset Pagination</text>
+
+  <!-- Flow Steps (Horizontal Pipeline) -->
+
+  <!-- 1. Client Request -->
+  <g transform="translate(60, 150)">
+    <rect width="250" height="420" rx="14" fill="url(#boxGrad)" stroke="#6366f1" stroke-width="1.8" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="250" height="45" rx="14" fill="#1e1b4b"/>
+    <text x="125" y="28" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">1. Client HTTP Query</text>
+    
+    <text x="20" y="75" fill="#a5b4fc" font-size="11" font-weight="700">ENDPOINT:</text>
+    <rect x="15" y="85" width="220" height="50" rx="6" fill="#0f0f14" stroke="rgba(255,255,255,0.1)"/>
+    <text x="25" y="105" fill="#f8fafc" font-size="10.5" font-family="monospace">GET /api/employees/search</text>
+    
+    <text x="20" y="160" fill="#a5b4fc" font-size="11" font-weight="700">QUERY PARAMETERS:</text>
+    <rect x="15" y="170" width="220" height="220" rx="6" fill="#0f0f14" stroke="rgba(255,255,255,0.1)"/>
+    <text x="25" y="195" fill="#cbd5e1" font-size="11" font-family="monospace">• search = "Daniel"</text>
+    <text x="25" y="225" fill="#cbd5e1" font-size="11" font-family="monospace">• role = "EMPLOYEE"</text>
+    <text x="25" y="255" fill="#cbd5e1" font-size="11" font-family="monospace">• departmentId = 1</text>
+    <text x="25" y="285" fill="#cbd5e1" font-size="11" font-family="monospace">• page = 0</text>
+    <text x="25" y="315" fill="#cbd5e1" font-size="11" font-family="monospace">• size = 10</text>
+    <text x="25" y="345" fill="#cbd5e1" font-size="11" font-family="monospace">• sortBy = "name"</text>
+    <text x="25" y="375" fill="#cbd5e1" font-size="11" font-family="monospace">• direction = "asc"</text>
+  </g>
+
+  <!-- Arrow 1 to 2 -->
+  <line x1="310" y1="360" x2="360" y2="360" stroke="#34d399" stroke-width="2.5" marker-end="url(#arrow3)"/>
+
+  <!-- 2. Criteria Builder -->
+  <g transform="translate(370, 150)">
+    <rect width="320" height="420" rx="14" fill="url(#boxGrad)" stroke="#a855f7" stroke-width="1.8" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="320" height="45" rx="14" fill="#2e1065"/>
+    <text x="160" y="28" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">2. JPA Criteria Specification</text>
+    
+    <text x="20" y="75" fill="#c084fc" font-size="11" font-weight="700">EmployeeSpecification.filterBy()</text>
+    <rect x="15" y="85" width="290" height="305" rx="6" fill="#0f0f14" stroke="rgba(255,255,255,0.1)"/>
+    <text x="25" y="110" fill="#38bdf8" font-size="11" font-weight="700">Dynamic Predicate Building:</text>
+    <text x="25" y="135" fill="#cbd5e1" font-size="10.5">• <tspan fill="#f472b6">Predicate 1 (Search Term):</tspan></text>
+    <text x="35" y="155" fill="#94a3b8" font-size="9.5" font-family="monospace">LOWER(u.name) LIKE '%daniel%'</text>
+    <text x="35" y="170" fill="#94a3b8" font-size="9.5" font-family="monospace">OR LOWER(u.email) LIKE '%daniel%'</text>
+    <text x="35" y="185" fill="#94a3b8" font-size="9.5" font-family="monospace">OR LOWER(u.code) LIKE '%daniel%'</text>
+
+    <text x="25" y="215" fill="#cbd5e1" font-size="10.5">• <tspan fill="#818cf8">Predicate 2 (Role):</tspan></text>
+    <text x="35" y="235" fill="#94a3b8" font-size="9.5" font-family="monospace">cb.equal(root.get("role"), role)</text>
+
+    <text x="25" y="265" fill="#cbd5e1" font-size="10.5">• <tspan fill="#34d399">Predicate 3 (Dept):</tspan></text>
+    <text x="35" y="285" fill="#94a3b8" font-size="9.5" font-family="monospace">cb.equal(root.get("departmentId"), 1)</text>
+
+    <text x="25" y="315" fill="#cbd5e1" font-size="10.5">• <tspan fill="#fbbf24">Pagination &amp; Sort:</tspan></text>
+    <text x="35" y="335" fill="#94a3b8" font-size="9.5" font-family="monospace">PageRequest.of(0, 10, Sort.by('name'))</text>
+    <text x="25" y="365" fill="#34d399" font-size="10" font-weight="700">✓ Combines with cb.and(...)</text>
+  </g>
+
+  <!-- Arrow 2 to 3 -->
+  <line x1="690" y1="360" x2="740" y2="360" stroke="#34d399" stroke-width="2.5" marker-end="url(#arrow3)"/>
+
+  <!-- 3. PostgreSQL Execution -->
+  <g transform="translate(750, 150)">
+    <rect width="280" height="420" rx="14" fill="url(#boxGrad)" stroke="#38bdf8" stroke-width="1.8" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="280" height="45" rx="14" fill="#082f49"/>
+    <text x="140" y="28" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">3. PostgreSQL Database Engine</text>
+    
+    <text x="20" y="75" fill="#38bdf8" font-size="11" font-weight="700">GENERATED SQL QUERY:</text>
+    <rect x="15" y="85" width="250" height="180" rx="6" fill="#0f0f14" stroke="rgba(255,255,255,0.1)"/>
+    <text x="25" y="105" fill="#cbd5e1" font-size="9.5" font-family="monospace">SELECT u.* FROM users u</text>
+    <text x="25" y="120" fill="#cbd5e1" font-size="9.5" font-family="monospace">WHERE (</text>
+    <text x="35" y="135" fill="#38bdf8" font-size="9" font-family="monospace">LOWER(u.name) LIKE '%daniel%'</text>
+    <text x="35" y="150" fill="#38bdf8" font-size="9" font-family="monospace">OR LOWER(u.email) LIKE '%...'</text>
+    <text x="25" y="165" fill="#cbd5e1" font-size="9.5" font-family="monospace">)</text>
+    <text x="25" y="180" fill="#cbd5e1" font-size="9.5" font-family="monospace">AND u.role = 'EMPLOYEE'</text>
+    <text x="25" y="195" fill="#cbd5e1" font-size="9.5" font-family="monospace">AND u.department_id = 1</text>
+    <text x="25" y="210" fill="#fbbf24" font-size="9.5" font-family="monospace">ORDER BY u.name ASC</text>
+    <text x="25" y="225" fill="#34d399" font-size="9.5" font-family="monospace">LIMIT 10 OFFSET 0;</text>
+
+    <text x="20" y="290" fill="#38bdf8" font-size="11" font-weight="700">COUNT SQL (PAGINATION):</text>
+    <rect x="15" y="300" width="250" height="90" rx="6" fill="#0f0f14" stroke="rgba(255,255,255,0.1)"/>
+    <text x="25" y="325" fill="#cbd5e1" font-size="9.5" font-family="monospace">SELECT COUNT(*) FROM users u</text>
+    <text x="25" y="340" fill="#cbd5e1" font-size="9.5" font-family="monospace">WHERE (LOWER(u.name) LIKE...)</text>
+    <text x="25" y="365" fill="#34d399" font-size="10" font-weight="700">• Returns: 38 matching rows</text>
+  </g>
+
+  <!-- Arrow 3 to 4 -->
+  <line x1="1030" y1="360" x2="1070" y2="360" stroke="#34d399" stroke-width="2.5" marker-end="url(#arrow3)"/>
+
+  <!-- 4. Paged Output Envelope -->
+  <g transform="translate(1080, 150)">
+    <rect width="220" height="420" rx="14" fill="url(#boxGrad)" stroke="#34d399" stroke-width="1.8" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="220" height="45" rx="14" fill="#064e3b"/>
+    <text x="110" y="28" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">4. PagedResponse&lt;T&gt;</text>
+    
+    <text x="15" y="75" fill="#6ee7b7" font-size="11" font-weight="700">RESPONSE ENVELOPE:</text>
+    <rect x="12" y="85" width="196" height="305" rx="6" fill="#0f0f14" stroke="rgba(255,255,255,0.1)"/>
+    <text x="20" y="110" fill="#cbd5e1" font-size="10" font-family="monospace">{</text>
+    <text x="28" y="130" fill="#34d399" font-size="10" font-family="monospace">"success": true,</text>
+    <text x="28" y="155" fill="#cbd5e1" font-size="10" font-family="monospace">"data": {</text>
+    <text x="36" y="180" fill="#38bdf8" font-size="10" font-family="monospace">"content": [ ... ],</text>
+    <text x="36" y="205" fill="#fbbf24" font-size="10" font-family="monospace">"page": 0,</text>
+    <text x="36" y="230" fill="#fbbf24" font-size="10" font-family="monospace">"size": 10,</text>
+    <text x="36" y="255" fill="#34d399" font-size="10" font-family="monospace">"totalElements": 38,</text>
+    <text x="36" y="280" fill="#34d399" font-size="10" font-family="monospace">"totalPages": 4,</text>
+    <text x="36" y="305" fill="#cbd5e1" font-size="10" font-family="monospace">"first": true,</text>
+    <text x="36" y="330" fill="#cbd5e1" font-size="10" font-family="monospace">"last": false</text>
+    <text x="28" y="355" fill="#cbd5e1" font-size="10" font-family="monospace">}</text>
+    <text x="20" y="375" fill="#cbd5e1" font-size="10" font-family="monospace">}</text>
+  </g>
+
+  <!-- Bottom Architecture Box -->
+  <rect x="50" y="600" width="1250" height="310" rx="16" fill="#121216" stroke="rgba(255,255,255,0.1)" stroke-width="1.2"/>
+  <text x="80" y="635" fill="#f8fafc" font-size="15" font-weight="700">TECHNICAL ADVANTAGES OF THIS SPECIFICATION PATTERN:</text>
+
+  <g transform="translate(80, 660)">
+    <rect width="360" height="220" rx="10" fill="#18181b" stroke="rgba(255,255,255,0.08)"/>
+    <text x="20" y="30" fill="#34d399" font-size="13" font-weight="700">• Zero SQL Injection Vulnerability</text>
+    <text x="20" y="55" fill="#94a3b8" font-size="11.5">JPA Criteria API uses strongly typed</text>
+    <text x="20" y="75" fill="#94a3b8" font-size="11.5">parameter binding (?1, ?2) under the hood,</text>
+    <text x="20" y="95" fill="#94a3b8" font-size="11.5">guaranteeing malicious input is never</text>
+    <text x="20" y="115" fill="#94a3b8" font-size="11.5">interpolated into raw SQL strings.</text>
+  </g>
+
+  <g transform="translate(480, 660)">
+    <rect width="360" height="220" rx="10" fill="#18181b" stroke="rgba(255,255,255,0.08)"/>
+    <text x="20" y="30" fill="#38bdf8" font-size="13" font-weight="700">• Extreme Combinatorial Flexibility</text>
+    <text x="20" y="55" fill="#94a3b8" font-size="11.5">Supports any combination of search,</text>
+    <text x="20" y="75" fill="#94a3b8" font-size="11.5">role filter, department filter, and cycle</text>
+    <text x="20" y="95" fill="#94a3b8" font-size="11.5">without needing 20+ separate repository</text>
+    <text x="20" y="115" fill="#94a3b8" font-size="11.5">query methods like findByNameAndRole(...).</text>
+  </g>
+
+  <g transform="translate(880, 660)">
+    <rect width="380" height="220" rx="10" fill="#18181b" stroke="rgba(255,255,255,0.08)"/>
+    <text x="20" y="30" fill="#fbbf24" font-size="13" font-weight="700">• Constant Memory Footprint</text>
+    <text x="20" y="55" fill="#94a3b8" font-size="11.5">Queries execute with SQL LIMIT and</text>
+    <text x="20" y="75" fill="#94a3b8" font-size="11.5">OFFSET, ensuring only the 10 requested</text>
+    <text x="20" y="95" fill="#94a3b8" font-size="11.5">records are loaded into Java heap,</text>
+    <text x="20" y="115" fill="#94a3b8" font-size="11.5">protecting against OutOfMemory errors.</text>
+  </g>
+</svg>

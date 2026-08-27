@@ -1,0 +1,81 @@
+EMPLOYEE PERFORMANCE MANAGEMENT MODULE
+
+1. PURPOSE
+The Performance Management Module is used to track, evaluate, and manage
+employee performance within an organization.
+
+2. EMPLOYEE PERFORMANCE
+Each employee can have multiple performance records.
+
+Performance records contain:
+- Employee ID
+- Employee Name
+- Department
+- Review Period
+- Performance Score
+- Performance Rating
+- Reviewer
+- Reviewer Comments
+- Goals Achieved
+- Areas for Improvement
+- Review Status
+
+3. PERFORMANCE RATING
+
+The system supports the following ratings:
+
+1 - Needs Improvement
+2 - Below Expectations
+3 - Meets Expectations
+4 - Exceeds Expectations
+5 - Outstanding
+
+4. PERFORMANCE REVIEW PROCESS
+
+The performance review follows these steps:
+
+Employee
+   |
+   v
+Goals Assigned
+   |
+   v
+Employee Works on Goals
+   |
+   v
+Manager Reviews Performance
+   |
+   v
+Performance Score Assigned
+   |
+   v
+Feedback Provided
+   |
+   v
+Review Completed
+
+5. MAIN FEATURES
+
+- Create performance review
+- View employee performance
+- Update performance review
+- Delete performance review
+- Search performance records
+- Filter performance records
+- Sort performance records
+- Pagination
+- Performance rating
+- Manager feedback
+- Goal tracking
+- Review status tracking
+
+6. REVIEW STATUS
+
+Possible statuses:
+
+- DRAFT
+- IN_PROGRESS
+- SUBMITTED
+- APPROVED
+- REJECTED
+- COMPLETED

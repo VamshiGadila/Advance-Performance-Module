@@ -1,0 +1,63 @@
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/dist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Node / Next.js Frontend ###
+frontend_ascend/node_modules/
+frontend_ascend/.next/
+frontend_ascend/out/
+frontend_ascend/build/
+frontend_ascend/.env*.local
+frontend_ascend/.env
+
+### Secrets & Local Database Credentials ###
+# Ignores all secret and local property files
+**/*-local.properties
+**/*-secret.properties
+**/*.env
+**/.env*
+!**/.env.example
+!**/*-example.properties
+
+# Ignores SSL keys & certificates
+*.p12
+*.jks
+*.key
+*.pem
+
+### OS & Scratch Logs ###
+*.log
+.DS_Store
+Thumbs.db
