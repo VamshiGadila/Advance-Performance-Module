@@ -6,7 +6,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16.3-black.svg)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-cyan.svg)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-v4-38bdf8.svg)](https://tailwindcss.com/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)]()
+
 
 An enterprise-grade **Performance Appraisal, OKR/KPI Tracking, and HR Governance System** built with **Spring Boot 4 / Java 21**, **Spring Security (Stateless JWT)**, **PostgreSQL 18**, **Hibernate JPA Criteria Specifications**, and **Next.js 16 (React 19)**.
 
