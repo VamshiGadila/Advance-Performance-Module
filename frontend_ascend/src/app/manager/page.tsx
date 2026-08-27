@@ -12,15 +12,12 @@ import {
     rejectModificationRequest
 } from "@/services/managerService";
 import { Cycle } from "@/services/hrService";
-import { getManagerAnalytics, ManagerAnalytics } from "@/services/analyticsService";
-import { GoalStatusDonut } from "@/components/AnalyticsCharts";
 import Pagination from "@/components/Pagination";
 
 export default function ManagerDashboard() {
     const [team, setTeam] = useState<TeamMember[]>([]);
     const [activeCycle, setActiveCycle] = useState<Cycle | null>(null);
     const [modRequests, setModRequests] = useState<ModificationRequest[]>([]);
-    const [analytics, setAnalytics] = useState<ManagerAnalytics | null>(null);
 
     // Search and Pagination
     const [searchTerm, setSearchTerm] = useState("");
@@ -44,14 +41,12 @@ export default function ManagerDashboard() {
         Promise.all([
             getTeam().catch(() => [] as TeamMember[]),
             getActiveCycle().catch(() => null),
-            getModificationRequests("PENDING").catch(() => [] as ModificationRequest[]),
-            getManagerAnalytics().catch(() => null)
+            getModificationRequests("PENDING").catch(() => [] as ModificationRequest[])
         ])
-            .then(([teamData, cycleData, modData, analyticsData]) => {
+            .then(([teamData, cycleData, modData]) => {
                 setTeam(teamData);
                 setActiveCycle(cycleData);
                 setModRequests(modData);
-                setAnalytics(analyticsData);
             })
             .catch((e) => setError(e instanceof Error ? e.message : "Failed to load team data"))
             .finally(() => setLoading(false));
@@ -160,64 +155,20 @@ export default function ManagerDashboard() {
             <div className="stats-grid" style={{ marginBottom: "24px" }}>
                 <div className="stat-card">
                     <div className="stat-label">Direct Reports</div>
-                    <div className="stat-value">{analytics?.teamSize ?? team.length}</div>
+                    <div className="stat-value">{team.length}</div>
                     <div className="stat-desc">Assigned reporting team members</div>
                 </div>
 
                 <div className="stat-card emerald">
-                    <div className="stat-label">Team Goals Assigned</div>
-                    <div className="stat-value">{analytics?.totalGoals ?? 0}</div>
-                    <div className="stat-desc">Goals tracked in active cycle</div>
-                </div>
-
-                <div className="stat-card purple">
-                    <div className="stat-label">Team Completion Rate</div>
-                    <div className="stat-value">{analytics?.teamCompletionRate ?? 0}%</div>
-                    <div className="stat-desc">{analytics?.completedGoals ?? 0} goals marked completed</div>
+                    <div className="stat-label">Review Period</div>
+                    <div className="stat-value">{activeCycle ? "ACTIVE" : "STANDBY"}</div>
+                    <div className="stat-desc">Goal assignment and evaluation cycle</div>
                 </div>
 
                 <div className="stat-card amber">
                     <div className="stat-label">Pending Reviews</div>
-                    <div className="stat-value">{(analytics?.pendingModificationRequests ?? 0) + (analytics?.pendingAcceptanceGoals ?? 0)}</div>
-                    <div className="stat-desc">Modifications & pending acceptances</div>
-                </div>
-            </div>
-
-            {/* TEAM VISUAL ANALYTICS */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "20px", marginBottom: "28px" }}>
-                <GoalStatusDonut
-                    statusMap={analytics?.goalsByStatus || {}}
-                    title="Team Goal Status Distribution"
-                />
-
-                <div className="card" style={{ padding: "24px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                    <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-                            <div style={{ fontSize: "1.5rem" }}>📋</div>
-                            <div>
-                                <h3 style={{ fontSize: "1rem", fontWeight: "700", color: "var(--text-main)", margin: 0 }}>Team Performance Oversight</h3>
-                                <div style={{ fontSize: "0.825rem", color: "var(--text-muted)" }}>Guidance for cycle allocations</div>
-                            </div>
-                        </div>
-                        <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.6", marginTop: "12px" }}>
-                            Each employee must receive balanced OKRs / KPIs with a cumulative weight budget not exceeding <strong>100.00%</strong>. Review and approve pending modification requests promptly to keep deliverables on track.
-                        </p>
-                    </div>
-
-                    <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
-                        <div style={{ flex: 1, padding: "12px", background: "var(--bg-subtle)", borderRadius: "8px", border: "1px solid var(--border)", textAlign: "center" }}>
-                            <div style={{ fontSize: "1.2rem", fontWeight: "700", color: "#3b82f6" }}>{analytics?.inProgressGoals ?? 0}</div>
-                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>In Progress</div>
-                        </div>
-                        <div style={{ flex: 1, padding: "12px", background: "var(--bg-subtle)", borderRadius: "8px", border: "1px solid var(--border)", textAlign: "center" }}>
-                            <div style={{ fontSize: "1.2rem", fontWeight: "700", color: "#10b981" }}>{analytics?.completedGoals ?? 0}</div>
-                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Completed</div>
-                        </div>
-                        <div style={{ flex: 1, padding: "12px", background: "var(--bg-subtle)", borderRadius: "8px", border: "1px solid var(--border)", textAlign: "center" }}>
-                            <div style={{ fontSize: "1.2rem", fontWeight: "700", color: "#f59e0b" }}>{analytics?.pendingAcceptanceGoals ?? 0}</div>
-                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Pending Accept</div>
-                        </div>
-                    </div>
+                    <div className="stat-value">{modRequests.length}</div>
+                    <div className="stat-desc">Direct report modification requests</div>
                 </div>
             </div>
 

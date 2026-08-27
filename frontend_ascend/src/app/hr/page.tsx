@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getHrAnalytics, HrAnalytics } from "@/services/analyticsService";
-import { GoalStatusDonut, DepartmentBarChart } from "@/components/AnalyticsCharts";
+import { getCycles, Cycle, getEmployees } from "@/services/hrService";
 
 export default function HRDashboard() {
-    const [data, setData] = useState<HrAnalytics | null>(null);
+    const [activeCycle, setActiveCycle] = useState<Cycle | null>(null);
+    const [totalEmployees, setTotalEmployees] = useState(0);
+    const [totalCycles, setTotalCycles] = useState(0);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(true);
 
@@ -14,9 +15,17 @@ export default function HRDashboard() {
         setLoading(true);
         setError("");
 
-        getHrAnalytics()
-            .then(setData)
-            .catch((e) => setError(e instanceof Error ? e.message : "Failed to load executive analytics"))
+        Promise.all([
+            getCycles().then((cycles) => {
+                setTotalCycles(cycles.length);
+                const active = cycles.find((c) => c.status === "ACTIVE");
+                setActiveCycle(active || null);
+            }),
+            getEmployees().then((res) => {
+                setTotalEmployees(res.length || 0);
+            })
+        ])
+            .catch((e) => setError(e instanceof Error ? e.message : "Failed to load dashboard overview"))
             .finally(() => setLoading(false));
     }, []);
 
@@ -32,7 +41,7 @@ export default function HRDashboard() {
     if (error) {
         return (
             <div className="alert alert-error">
-                <span>⚠️</span>
+                <span className="alert-icon">!</span>
                 <span>{error}</span>
             </div>
         );
@@ -42,22 +51,22 @@ export default function HRDashboard() {
         <section>
             <div className="page-header" style={{ marginBottom: "20px" }}>
                 <div>
-                    <h1 className="page-title">Executive Operations & Analytics</h1>
+                    <h1 className="page-title">Executive Operations Control Center</h1>
                     <p className="page-subtitle">Organization-wide workforce oversight, performance cycles, and goal achievement.</p>
                 </div>
             </div>
 
             {/* ACTIVE CYCLE BANNER */}
-            {data?.activeCycleId ? (
+            {activeCycle ? (
                 <div className="cycle-banner" style={{ marginBottom: "24px" }}>
                     <div className="cycle-banner-content">
                         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
                             <span className="cycle-banner-pill">ACTIVE CYCLE</span>
-                            <span style={{ fontSize: "0.85rem", opacity: 0.9 }}>Cycle ID: #{data.activeCycleId}</span>
+                            <span style={{ fontSize: "0.85rem", opacity: 0.9 }}>Cycle ID: #{activeCycle.id}</span>
                         </div>
-                        <h2 style={{ fontSize: "1.35rem", fontWeight: "700", margin: "4px 0" }}>{data.activeCycleName}</h2>
+                        <h2 style={{ fontSize: "1.35rem", fontWeight: "700", margin: "4px 0" }}>{activeCycle.name}</h2>
                         <p style={{ margin: 0, fontSize: "0.85rem", opacity: 0.9 }}>
-                            🗓️ Active Timeline: <strong>{data.activeCycleStartDate}</strong> to <strong>{data.activeCycleEndDate}</strong>
+                            🗓️ Active Timeline: <strong>{activeCycle.startDate}</strong> to <strong>{activeCycle.endDate}</strong>
                         </p>
                     </div>
                     <Link href="/hr/cycles" className="btn btn-secondary" style={{ fontWeight: "700" }}>
@@ -82,40 +91,21 @@ export default function HRDashboard() {
             <div className="stats-grid" style={{ marginBottom: "24px" }}>
                 <div className="stat-card">
                     <div className="stat-label">Total Workforce</div>
-                    <div className="stat-value">{data?.totalEmployees ?? 0}</div>
+                    <div className="stat-value">{totalEmployees}</div>
                     <div className="stat-desc">Permanent registered employee identities</div>
                 </div>
 
                 <div className="stat-card emerald">
-                    <div className="stat-label">People Managers</div>
-                    <div className="stat-value">{data?.totalManagers ?? 0}</div>
-                    <div className="stat-desc">Managers with direct reports</div>
-                </div>
-
-                <div className="stat-card amber">
-                    <div className="stat-label">Active Linkages</div>
-                    <div className="stat-value">{data?.activeAssignments ?? 0}</div>
-                    <div className="stat-desc">Employees assigned to managers</div>
+                    <div className="stat-label">Review Cycles</div>
+                    <div className="stat-value">{totalCycles}</div>
+                    <div className="stat-desc">Configured performance evaluation cycles</div>
                 </div>
 
                 <div className="stat-card purple">
-                    <div className="stat-label">Cycle Completion Rate</div>
-                    <div className="stat-value">{data?.completionRate ?? 0}%</div>
-                    <div className="stat-desc">
-                        {data?.completedGoals ?? 0} of {data?.totalGoals ?? 0} goals achieved
-                    </div>
+                    <div className="stat-label">Review Status</div>
+                    <div className="stat-value">{activeCycle ? "ACTIVE" : "STANDBY"}</div>
+                    <div className="stat-desc">Current organization performance state</div>
                 </div>
-            </div>
-
-            {/* VISUAL ANALYTICS CHARTS SECTION */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "20px", marginBottom: "28px" }}>
-                <GoalStatusDonut
-                    statusMap={data?.goalsByStatus || {}}
-                    title="Organization Goal Status Breakdown"
-                />
-                <DepartmentBarChart
-                    departments={data?.departmentMetrics || []}
-                />
             </div>
 
             {/* ADMINISTRATIVE WORKFLOWS */}

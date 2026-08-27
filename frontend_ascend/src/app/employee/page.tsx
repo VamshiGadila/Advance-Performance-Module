@@ -12,15 +12,12 @@ import {
 } from "@/services/employeeService";
 import { getActiveCycle } from "@/services/managerService";
 import { Cycle } from "@/services/hrService";
-import { getEmployeeAnalytics, EmployeeAnalytics } from "@/services/analyticsService";
-import { GoalStatusDonut } from "@/components/AnalyticsCharts";
 import Pagination from "@/components/Pagination";
 
 export default function EmployeePage() {
     const [allGoals, setAllGoals] = useState<EmployeeGoal[]>([]);
     const [activeCycle, setActiveCycle] = useState<Cycle | null>(null);
     const [manager, setManager] = useState<MyManagerInfo | null>(null);
-    const [analytics, setAnalytics] = useState<EmployeeAnalytics | null>(null);
 
     // Search, Filter, and Pagination
     const [searchTerm, setSearchTerm] = useState("");
@@ -52,14 +49,12 @@ export default function EmployeePage() {
         Promise.all([
             getMyGoals().catch(() => [] as EmployeeGoal[]),
             getActiveCycle().catch(() => null),
-            getMyManager().catch(() => null),
-            getEmployeeAnalytics().catch(() => null)
+            getMyManager().catch(() => null)
         ])
-            .then(([goalsData, cycleData, managerData, analyticsData]) => {
+            .then(([goalsData, cycleData, managerData]) => {
                 setAllGoals(goalsData);
                 setActiveCycle(cycleData);
                 setManager(managerData);
-                setAnalytics(analyticsData);
             })
             .catch((err) => {
                 setError(err instanceof Error ? err.message : "Unable to load employee dashboard");
@@ -269,64 +264,20 @@ export default function EmployeePage() {
             <div className="stats-grid" style={{ marginBottom: "24px" }}>
                 <div className="stat-card">
                     <div className="stat-label">Assigned Objectives</div>
-                    <div className="stat-value">{analytics?.totalGoals ?? allGoals.length}</div>
+                    <div className="stat-value">{allGoals.length}</div>
                     <div className="stat-desc">OKRs and KPIs in active cycle</div>
                 </div>
 
                 <div className="stat-card amber">
                     <div className="stat-label">Allocated Weight Budget</div>
-                    <div className="stat-value">{Number(analytics?.totalWeightAllocated ?? roundedTotal)}%</div>
+                    <div className="stat-value">{roundedTotal}%</div>
                     <div className="stat-desc">Of maximum 100.00% target</div>
-                </div>
-
-                <div className="stat-card purple">
-                    <div className="stat-label">Average Completion</div>
-                    <div className="stat-value">{analytics?.averageProgress ?? 0}%</div>
-                    <div className="stat-desc">Overall milestone deliverable progress</div>
                 </div>
 
                 <div className="stat-card emerald">
                     <div className="stat-label">Action Items</div>
-                    <div className="stat-value">{analytics?.pendingAcceptanceGoals ?? 0}</div>
+                    <div className="stat-value">{allGoals.filter((g) => g.status === "PENDING_ACCEPTANCE").length}</div>
                     <div className="stat-desc">Goals awaiting your acceptance</div>
-                </div>
-            </div>
-
-            {/* PERSONAL VISUAL ANALYTICS */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "20px", marginBottom: "28px" }}>
-                <GoalStatusDonut
-                    statusMap={analytics?.goalsByStatus || {}}
-                    title="My Goal Status Distribution"
-                />
-
-                <div className="card" style={{ padding: "24px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                    <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-                            <div style={{ fontSize: "1.5rem" }}>🎯</div>
-                            <div>
-                                <h3 style={{ fontSize: "1rem", fontWeight: "700", color: "var(--text-main)", margin: 0 }}>Review Cycle Milestone Guide</h3>
-                                <div style={{ fontSize: "0.825rem", color: "var(--text-muted)" }}>Target deliverable expectations</div>
-                            </div>
-                        </div>
-                        <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.6", marginTop: "12px" }}>
-                            Review all goals allocated by your manager. If any objective or timeline requires revision, click <strong>"Request Modification"</strong> before accepting to ensure clear quarterly alignment.
-                        </p>
-                    </div>
-
-                    <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
-                        <div style={{ flex: 1, padding: "12px", background: "var(--bg-subtle)", borderRadius: "8px", border: "1px solid var(--border)", textAlign: "center" }}>
-                            <div style={{ fontSize: "1.2rem", fontWeight: "700", color: "#10b981" }}>{analytics?.completedGoals ?? 0}</div>
-                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Completed</div>
-                        </div>
-                        <div style={{ flex: 1, padding: "12px", background: "var(--bg-subtle)", borderRadius: "8px", border: "1px solid var(--border)", textAlign: "center" }}>
-                            <div style={{ fontSize: "1.2rem", fontWeight: "700", color: "#3b82f6" }}>{analytics?.inProgressGoals ?? 0}</div>
-                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>In Progress</div>
-                        </div>
-                        <div style={{ flex: 1, padding: "12px", background: "var(--bg-subtle)", borderRadius: "8px", border: "1px solid var(--border)", textAlign: "center" }}>
-                            <div style={{ fontSize: "1.2rem", fontWeight: "700", color: "#f59e0b" }}>{analytics?.pendingAcceptanceGoals ?? 0}</div>
-                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Pending Review</div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
