@@ -58,7 +58,7 @@ export default function Signup() {
             });
 
             setSuccess(
-                `🎉 Account created successfully! Your employee code is ${response.employeeCode}. Redirecting to login...`
+                `Account created successfully! Your employee code is ${response.employeeCode}. Redirecting to login...`
             );
 
             setName("");

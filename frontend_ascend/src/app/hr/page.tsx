@@ -3,6 +3,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getCycles, Cycle, getEmployees } from "@/services/hrService";
+import {
+    Loader2,
+    Calendar,
+    Zap,
+    Users,
+    Network,
+    CalendarRange,
+    ArrowRight,
+    AlertCircle
+} from "lucide-react";
 
 export default function HRDashboard() {
     const [activeCycle, setActiveCycle] = useState<Cycle | null>(null);
@@ -32,7 +42,7 @@ export default function HRDashboard() {
     if (loading) {
         return (
             <div style={{ padding: "60px 0", textAlign: "center", color: "var(--text-muted)" }}>
-                <div style={{ fontSize: "2rem", marginBottom: "12px" }}>⏳</div>
+                <Loader2 size={32} className="spin" style={{ margin: "0 auto 12px", display: "block" }} />
                 <div style={{ fontWeight: "600" }}>Loading HR Executive Control Center...</div>
             </div>
         );
@@ -40,8 +50,8 @@ export default function HRDashboard() {
 
     if (error) {
         return (
-            <div className="alert alert-error">
-                <span className="alert-icon">!</span>
+            <div className="alert alert-error" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <AlertCircle size={18} />
                 <span>{error}</span>
             </div>
         );
@@ -65,12 +75,14 @@ export default function HRDashboard() {
                             <span style={{ fontSize: "0.85rem", opacity: 0.9 }}>Cycle ID: #{activeCycle.id}</span>
                         </div>
                         <h2 style={{ fontSize: "1.35rem", fontWeight: "700", margin: "4px 0" }}>{activeCycle.name}</h2>
-                        <p style={{ margin: 0, fontSize: "0.85rem", opacity: 0.9 }}>
-                            🗓️ Active Timeline: <strong>{activeCycle.startDate}</strong> to <strong>{activeCycle.endDate}</strong>
+                        <p style={{ margin: 0, fontSize: "0.85rem", opacity: 0.9, display: "flex", alignItems: "center", gap: "6px" }}>
+                            <Calendar size={14} />
+                            <span>Active Timeline: <strong>{activeCycle.startDate}</strong> to <strong>{activeCycle.endDate}</strong></span>
                         </p>
                     </div>
-                    <Link href="/hr/cycles" className="btn btn-secondary" style={{ fontWeight: "700" }}>
-                        Manage Cycles →
+                    <Link href="/hr/cycles" className="btn btn-secondary" style={{ fontWeight: "700", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                        <span>Manage Cycles</span>
+                        <ArrowRight size={14} />
                     </Link>
                 </div>
             ) : (
@@ -110,24 +122,31 @@ export default function HRDashboard() {
 
             {/* ADMINISTRATIVE WORKFLOWS */}
             <div className="card">
-                <div className="card-header" style={{ marginBottom: "16px" }}>
-                    <h2 className="card-title" style={{ fontSize: "1.1rem" }}>⚡ Administrative Workflows</h2>
+                <div className="card-header" style={{ marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Zap size={18} style={{ color: "var(--primary)" }} />
+                    <h2 className="card-title" style={{ fontSize: "1.1rem", margin: 0 }}>Administrative Workflows</h2>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px" }}>
                     <Link href="/hr/employees" className="card" style={{ padding: "20px", textDecoration: "none", border: "1px solid var(--border)", transition: "all 0.15s ease" }}>
-                        <div style={{ fontSize: "1.75rem", marginBottom: "8px" }}>👥</div>
+                        <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "rgba(59, 130, 246, 0.12)", color: "#60a5fa", display: "grid", placeItems: "center", marginBottom: "12px" }}>
+                            <Users size={20} />
+                        </div>
                         <div style={{ fontWeight: "700", color: "var(--text-main)", marginBottom: "4px" }}>People & Promotion</div>
                         <div style={{ fontSize: "0.825rem", color: "var(--text-muted)" }}>Search directory, promote employees to manager</div>
                     </Link>
 
                     <Link href="/hr/assignments" className="card" style={{ padding: "20px", textDecoration: "none", border: "1px solid var(--border)", transition: "all 0.15s ease" }}>
-                        <div style={{ fontSize: "1.75rem", marginBottom: "8px" }}>🔗</div>
+                        <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "rgba(168, 85, 247, 0.12)", color: "#c084fc", display: "grid", placeItems: "center", marginBottom: "12px" }}>
+                            <Network size={20} />
+                        </div>
                         <div style={{ fontWeight: "700", color: "var(--text-main)", marginBottom: "4px" }}>Manager Linkages</div>
                         <div style={{ fontSize: "0.825rem", color: "var(--text-muted)" }}>Assign team members to reporting managers</div>
                     </Link>
 
                     <Link href="/hr/cycles" className="card" style={{ padding: "20px", textDecoration: "none", border: "1px solid var(--border)", transition: "all 0.15s ease" }}>
-                        <div style={{ fontSize: "1.75rem", marginBottom: "8px" }}>🔄</div>
+                        <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "rgba(16, 185, 129, 0.12)", color: "#34d399", display: "grid", placeItems: "center", marginBottom: "12px" }}>
+                            <CalendarRange size={20} />
+                        </div>
                         <div style={{ fontWeight: "700", color: "var(--text-main)", marginBottom: "4px" }}>Performance Cycles</div>
                         <div style={{ fontSize: "0.825rem", color: "var(--text-muted)" }}>Configure timeline, launch or close cycles</div>
                     </Link>

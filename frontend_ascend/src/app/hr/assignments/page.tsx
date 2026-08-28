@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { assignManager, deleteAssignment, getEmployees, getManagers, getAssignments, Employee, Assignment } from "@/services/hrService";
 import Pagination from "@/components/Pagination";
+import { Search, FilterX, AlertCircle, CheckCircle2, UserCheck, UserX } from "lucide-react";
 
 export default function AssignmentsPage() {
     const [employees, setEmployees] = useState<Employee[]>([]);
@@ -142,15 +143,15 @@ export default function AssignmentsPage() {
             </div>
 
             {error && (
-                <div className="alert alert-error">
-                    <span className="alert-icon">!</span>
+                <div className="alert alert-error" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <AlertCircle size={18} />
                     <span>{error}</span>
                 </div>
             )}
 
             {success && (
-                <div className="alert alert-success">
-                    <span className="alert-icon">✓</span>
+                <div className="alert alert-success" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <CheckCircle2 size={18} />
                     <span>{success}</span>
                 </div>
             )}
@@ -158,16 +159,18 @@ export default function AssignmentsPage() {
             <div className="card">
                 {/* SEARCH & FILTER BAR */}
                 <div style={{ display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap", alignItems: "center" }}>
-                    <div style={{ flex: "1 1 220px" }}>
+                    <div style={{ flex: "1 1 220px", position: "relative" }}>
+                        <Search size={15} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
                         <input
                             type="text"
                             className="form-input"
-                            placeholder="🔍 Filter employee name/code..."
+                            placeholder="Filter employee name/code..."
                             value={searchTerm}
                             onChange={(e) => {
                                 setSearchTerm(e.target.value);
                                 setPage(0);
                             }}
+                            style={{ paddingLeft: "34px", width: "100%" }}
                         />
                     </div>
 
@@ -175,7 +178,7 @@ export default function AssignmentsPage() {
                         {[
                             { label: "All Staff", value: "ALL" },
                             { label: "Assigned", value: "ASSIGNED" },
-                            { label: "⚠️ Unassigned", value: "UNASSIGNED" }
+                            { label: "Unassigned", value: "UNASSIGNED" }
                         ].map((tab) => (
                             <button
                                 key={tab.value}
@@ -218,8 +221,10 @@ export default function AssignmentsPage() {
                                 setManagerFilter("");
                                 setPage(0);
                             }}
+                            style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
                         >
-                            ✕ Clear
+                            <FilterX size={14} />
+                            <span>Clear</span>
                         </button>
                     )}
                 </div>
@@ -265,12 +270,14 @@ export default function AssignmentsPage() {
                                                 </td>
                                                 <td>
                                                     {currentAssignment ? (
-                                                        <span className="pill pill-active">
-                                                            👤 {currentAssignment.managerName || `Manager #${currentAssignment.managerId}`}
+                                                        <span className="pill pill-active" style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                                                            <UserCheck size={12} />
+                                                            <span>{currentAssignment.managerName || `Manager #${currentAssignment.managerId}`}</span>
                                                         </span>
                                                     ) : (
-                                                        <span className="pill" style={{ background: "var(--warning-light)", color: "var(--warning-text)", border: "1px solid var(--warning-border)" }}>
-                                                            ⚠️ Unassigned
+                                                        <span className="pill" style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "var(--warning-light)", color: "var(--warning-text)", border: "1px solid var(--warning-border)" }}>
+                                                            <AlertCircle size={11} />
+                                                            <span>Unassigned</span>
                                                         </span>
                                                     )}
                                                 </td>

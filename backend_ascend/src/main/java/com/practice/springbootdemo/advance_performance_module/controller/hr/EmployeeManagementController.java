@@ -67,6 +67,51 @@ public class EmployeeManagementController {
         return ApiResponse.success("Employee successfully promoted to Manager", response);
     }
 
+    @GetMapping("/all")
+    @Operation(summary = "Get All Organization Staff", description = "Retrieve all active staff members across roles (HR only)")
+    public ApiResponse<List<EmployeeResponse>> allStaff() {
+        log.debug("REST: GET /api/hr/employees/all - Fetching all staff");
+        return ApiResponse.success(service.getAllStaff());
+    }
+
+    @PatchMapping("/{id}/manager")
+    @Operation(
+            summary = "Assign / Change Employee Manager",
+            description = "Assign an employee to a reporting manager or move them to a new manager (HR only)"
+    )
+    public ApiResponse<EmployeeResponse> changeManager(
+            @PathVariable Long id,
+            @Valid @RequestBody com.practice.springbootdemo.advance_performance_module.dto.hr.ChangeManagerRequest request
+    ) {
+        log.info("REST: PATCH /api/hr/employees/{}/manager - Reassigning to manager {}", id, request.managerId());
+        EmployeeResponse response = service.changeManager(id, request.managerId());
+        return ApiResponse.success("Manager assigned successfully", response);
+    }
+
+    @PatchMapping("/{id}/department")
+    @Operation(
+            summary = "Transfer Employee Department",
+            description = "Transfer an employee to a new department (HR only)"
+    )
+    public ApiResponse<EmployeeResponse> transferDepartment(
+            @PathVariable Long id,
+            @Valid @RequestBody com.practice.springbootdemo.advance_performance_module.dto.hr.TransferDepartmentRequest request
+    ) {
+        log.info("REST: PATCH /api/hr/employees/{}/department - Transferring to department {}", id, request.departmentId());
+        EmployeeResponse response = service.transferDepartment(id, request.departmentId());
+        return ApiResponse.success("Department transferred successfully", response);
+    }
+
+    @GetMapping("/hierarchy")
+    @Operation(
+            summary = "Get Manager Hierarchy",
+            description = "Retrieve organization manager hierarchy tree with direct reporting employees (HR only)"
+    )
+    public ApiResponse<List<com.practice.springbootdemo.advance_performance_module.dto.hr.ManagerHierarchyResponse>> getHierarchy() {
+        log.debug("REST: GET /api/hr/employees/hierarchy - Fetching manager hierarchy");
+        return ApiResponse.success(service.getManagerHierarchy());
+    }
+
     @GetMapping("/search")
     @Operation(
             summary = "Search Employees (HR)",

@@ -12,12 +12,45 @@ import {
 } from "@/services/employeeService";
 import { getActiveCycle } from "@/services/managerService";
 import { Cycle } from "@/services/hrService";
+import { getMyProfile, updateMyProfile, UserProfile } from "@/services/authService";
 import Pagination from "@/components/Pagination";
+import {
+    Clock,
+    CheckCircle2,
+    TrendingUp,
+    FileEdit,
+    Award,
+    UserCircle,
+    UserCheck,
+    Calendar,
+    Search,
+    FilterX,
+    MessageSquare,
+    Check,
+    Shield,
+    Sparkles,
+    Briefcase,
+    X,
+    Target,
+    AlertCircle
+} from "lucide-react";
 
 export default function EmployeePage() {
     const [allGoals, setAllGoals] = useState<EmployeeGoal[]>([]);
     const [activeCycle, setActiveCycle] = useState<Cycle | null>(null);
     const [manager, setManager] = useState<MyManagerInfo | null>(null);
+
+    // Profile state
+    const [profileModalOpen, setProfileModalOpen] = useState(false);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [loadingProfile, setLoadingProfile] = useState(false);
+    const [skillInput, setSkillInput] = useState("");
+    const [domainInput, setDomainInput] = useState("");
+    const [locationInput, setLocationInput] = useState("");
+    const [expYearsInput, setExpYearsInput] = useState<number | string>(0);
+    const [savingProfile, setSavingProfile] = useState(false);
+    const [profileError, setProfileError] = useState("");
+    const [profileSuccess, setProfileSuccess] = useState("");
 
     // Search, Filter, and Pagination
     const [searchTerm, setSearchTerm] = useState("");
@@ -121,6 +154,48 @@ export default function EmployeePage() {
         }
     };
 
+    const handleOpenProfile = () => {
+        setProfileModalOpen(true);
+        setLoadingProfile(true);
+        setProfileError("");
+        setProfileSuccess("");
+        getMyProfile()
+            .then((data) => {
+                setProfile(data);
+                setSkillInput(data.skill || "");
+                setDomainInput(data.domain || "");
+                setLocationInput(data.location || "");
+                setExpYearsInput(data.experienceYears ?? 0);
+            })
+            .catch((err) => setProfileError(err.message || "Failed to load profile"))
+            .finally(() => setLoadingProfile(false));
+    };
+
+    const handleSaveProfile = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSavingProfile(true);
+        setProfileError("");
+        setProfileSuccess("");
+        try {
+            const updated = await updateMyProfile({
+                skill: skillInput.trim(),
+                domain: domainInput.trim(),
+                location: locationInput.trim(),
+                experienceYears: Number(expYearsInput)
+            });
+            setProfile(updated);
+            setProfileSuccess("Your profile and professional skills have been updated!");
+            setSuccessMessage("Skills and profile details updated successfully!");
+            setTimeout(() => {
+                setProfileModalOpen(false);
+            }, 1200);
+        } catch (err: any) {
+            setProfileError(err.message || "Failed to update profile");
+        } finally {
+            setSavingProfile(false);
+        }
+    };
+
     const totalWeight = allGoals.reduce((acc, g) => acc + (Number(g.weight) || 0), 0);
     const roundedTotal = Math.round(totalWeight * 100) / 100;
 
@@ -145,15 +220,15 @@ export default function EmployeePage() {
     const getStatusPill = (status: string) => {
         switch (status) {
             case "PENDING_ACCEPTANCE":
-                return <span className="pill pill-draft">⏳ Pending Acceptance</span>;
+                return <span className="pill pill-draft" style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}><Clock size={12} /><span>Pending Acceptance</span></span>;
             case "ACCEPTED":
-                return <span className="pill pill-kpi">✓ Accepted</span>;
+                return <span className="pill pill-kpi" style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}><CheckCircle2 size={12} /><span>Accepted</span></span>;
             case "IN_PROGRESS":
-                return <span className="pill pill-active">⚡ In Progress</span>;
+                return <span className="pill pill-active" style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}><TrendingUp size={12} /><span>In Progress</span></span>;
             case "MODIFICATION_REQUESTED":
-                return <span className="pill" style={{ background: "rgba(245, 158, 11, 0.12)", color: "#fbbf24", border: "1px solid rgba(251, 191, 36, 0.3)" }}>📝 Modification Requested</span>;
+                return <span className="pill" style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(245, 158, 11, 0.12)", color: "#fbbf24", border: "1px solid rgba(251, 191, 36, 0.3)" }}><FileEdit size={12} /><span>Modification Requested</span></span>;
             case "COMPLETED":
-                return <span className="pill pill-completed">🎉 Completed</span>;
+                return <span className="pill pill-completed" style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}><Award size={12} /><span>Completed</span></span>;
             default:
                 return <span className="pill pill-draft">{status}</span>;
         }
@@ -161,25 +236,41 @@ export default function EmployeePage() {
 
     return (
         <section>
-            <div className="page-header">
+            <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
                 <div>
                     <h1 className="page-title">My Performance Goals</h1>
                     <p className="page-subtitle">
                         View objectives and key performance indicators assigned to you for the active review cycle.
                     </p>
                 </div>
+                <button
+                    type="button"
+                    onClick={handleOpenProfile}
+                    className="btn btn-secondary"
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        fontWeight: "600",
+                        borderColor: "rgba(99, 102, 241, 0.4)",
+                        color: "#818cf8"
+                    }}
+                >
+                    <UserCircle size={16} />
+                    <span>My Profile & Skills</span>
+                </button>
             </div>
 
             {error && (
-                <div className="alert alert-error">
-                    <span className="alert-icon">!</span>
+                <div className="alert alert-error" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <AlertCircle size={18} />
                     <span>{error}</span>
                 </div>
             )}
 
             {successMessage && (
-                <div className="alert alert-success">
-                    <span className="alert-icon">✓</span>
+                <div className="alert alert-success" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <CheckCircle2 size={18} />
                     <span>{successMessage}</span>
                 </div>
             )}
@@ -193,14 +284,15 @@ export default function EmployeePage() {
                             <span style={{ fontSize: "0.85rem", opacity: 0.9 }}>ID: #{activeCycle.id}</span>
                         </div>
                         <h2>{activeCycle.name}</h2>
-                        <p>
-                            🗓️ Timeline: <strong>{activeCycle.startDate}</strong> to <strong>{activeCycle.endDate}</strong>
+                        <p style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <Calendar size={14} />
+                            <span>Timeline: <strong>{activeCycle.startDate}</strong> to <strong>{activeCycle.endDate}</strong></span>
                         </p>
                     </div>
                 </div>
             ) : (
-                <div className="alert alert-info">
-                    <span className="alert-icon">i</span>
+                <div className="alert alert-info" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <AlertCircle size={18} />
                     <span>No active performance cycle is currently open. Once HR publishes an active cycle, your goals will appear here.</span>
                 </div>
             )}
@@ -243,7 +335,10 @@ export default function EmployeePage() {
                     </div>
 
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <span className="pill pill-active">👤 Assigned Manager</span>
+                        <span className="pill pill-active" style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                            <UserCheck size={12} />
+                            <span>Assigned Manager</span>
+                        </span>
                         {manager.cycleName && (
                             <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
                                 Cycle: {manager.cycleName}
@@ -252,8 +347,8 @@ export default function EmployeePage() {
                     </div>
                 </div>
             ) : (
-                <div className="alert alert-info" style={{ marginBottom: "24px" }}>
-                    <span className="alert-icon">i</span>
+                <div className="alert alert-info" style={{ marginBottom: "24px", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <AlertCircle size={18} />
                     <span>
                         You have not been assigned to a reporting manager by HR yet. Once HR assigns your manager, they will balance and assign your performance goals.
                     </span>
@@ -304,21 +399,26 @@ export default function EmployeePage() {
 
             <div className="card">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
-                    <h2 className="card-title" style={{ margin: 0 }}>🎯 Assigned Objectives & KPIs</h2>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <Target size={20} style={{ color: "var(--primary)" }} />
+                        <h2 className="card-title" style={{ margin: 0 }}>Assigned Objectives & KPIs</h2>
+                    </div>
                 </div>
 
                 {/* SEARCH & FILTER BAR */}
                 <div style={{ display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap", alignItems: "center" }}>
-                    <div style={{ flex: "1 1 200px" }}>
+                    <div style={{ flex: "1 1 200px", position: "relative" }}>
+                        <Search size={15} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
                         <input
                             type="text"
                             className="form-input"
-                            placeholder="🔍 Search my goals..."
+                            placeholder="Search my goals..."
                             value={searchTerm}
                             onChange={(e) => {
                                 setSearchTerm(e.target.value);
                                 setPage(0);
                             }}
+                            style={{ paddingLeft: "34px", width: "100%" }}
                         />
                     </div>
 
@@ -363,8 +463,10 @@ export default function EmployeePage() {
                                 setStatusFilter("");
                                 setPage(0);
                             }}
+                            style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
                         >
-                            ✕ Clear
+                            <FilterX size={14} />
+                            <span>Clear</span>
                         </button>
                     )}
                 </div>
@@ -430,7 +532,7 @@ export default function EmployeePage() {
                                     <div style={{ marginBottom: "14px" }}>
                                         <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", fontWeight: "600", marginBottom: "4px" }}>
                                             <span>Progress: {g.progress ?? 0}%</span>
-                                            <span style={{ color: "var(--text-muted)" }}>{g.progress === 100 ? "🎉 Completed" : "Ongoing"}</span>
+                                            <span style={{ color: "var(--text-muted)" }}>{g.progress === 100 ? "Completed" : "Ongoing"}</span>
                                         </div>
                                         <div className="progress-bar-container">
                                             <div
@@ -441,14 +543,16 @@ export default function EmployeePage() {
                                     </div>
 
                                     {g.employeeComment && (
-                                        <div style={{ fontSize: "0.825rem", color: "var(--text-muted)", fontStyle: "italic", marginBottom: "12px" }}>
-                                            💬 Latest comment: "{g.employeeComment}"
+                                        <div style={{ fontSize: "0.825rem", color: "var(--text-muted)", fontStyle: "italic", marginBottom: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <MessageSquare size={13} />
+                                            <span>Latest comment: "{g.employeeComment}"</span>
                                         </div>
                                     )}
 
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "12px", borderTop: "1px solid var(--border)", flexWrap: "wrap", gap: "10px" }}>
-                                        <div style={{ fontSize: "0.825rem", color: "var(--text-muted)" }}>
-                                            📅 Due Date: <strong>{g.dueDate || "Not specified"}</strong>
+                                        <div style={{ fontSize: "0.825rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <Calendar size={13} />
+                                            <span>Due Date: <strong>{g.dueDate || "Not specified"}</strong></span>
                                         </div>
 
                                         <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
@@ -458,16 +562,20 @@ export default function EmployeePage() {
                                                         type="button"
                                                         className="btn btn-primary btn-sm"
                                                         onClick={() => handleAccept(g.id)}
+                                                        style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
                                                     >
-                                                        ✓ Accept Goal
+                                                        <Check size={13} />
+                                                        <span>Accept Goal</span>
                                                     </button>
 
                                                     <button
                                                         type="button"
                                                         className="btn btn-secondary btn-sm"
                                                         onClick={() => setModModalGoal(g)}
+                                                        style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
                                                     >
-                                                        📝 Request Changes
+                                                        <FileEdit size={13} />
+                                                        <span>Request Changes</span>
                                                     </button>
                                                 </>
                                             )}
@@ -481,23 +589,27 @@ export default function EmployeePage() {
                                                             setProgressModalGoal(g);
                                                             setNewProgress(g.progress ?? 0);
                                                         }}
+                                                        style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
                                                     >
-                                                        📈 Update Progress
+                                                        <TrendingUp size={13} />
+                                                        <span>Update Progress</span>
                                                     </button>
 
                                                     <button
                                                         type="button"
                                                         className="btn btn-secondary btn-sm"
                                                         onClick={() => setModModalGoal(g)}
+                                                        style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
                                                     >
-                                                        📝 Request Changes
+                                                        <FileEdit size={13} />
+                                                        <span>Request Changes</span>
                                                     </button>
                                                 </>
                                             )}
 
                                             {g.status === "MODIFICATION_REQUESTED" && (
                                                 <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.825rem", color: "var(--warning-text)", background: "var(--warning-light)", padding: "6px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--warning-border)" }}>
-                                                    <span>⏳</span>
+                                                    <Clock size={13} />
                                                     <span>Modification request pending manager review</span>
                                                 </div>
                                             )}
@@ -537,10 +649,9 @@ export default function EmployeePage() {
                                     background: "rgba(99, 102, 241, 0.15)",
                                     color: "#6366f1",
                                     display: "grid",
-                                    placeItems: "center",
-                                    fontSize: "1.25rem"
+                                    placeItems: "center"
                                 }}>
-                                    📈
+                                    <TrendingUp size={20} />
                                 </div>
                                 <div>
                                     <h2 style={{ fontSize: "1.2rem", fontWeight: "800", color: "var(--text-main)", margin: 0 }}>
@@ -557,7 +668,7 @@ export default function EmployeePage() {
                                 className="btn-close"
                                 title="Close modal"
                             >
-                                ✕
+                                <X size={18} />
                             </button>
                         </div>
 
@@ -621,10 +732,9 @@ export default function EmployeePage() {
                                     background: "rgba(245, 158, 11, 0.15)",
                                     color: "#f59e0b",
                                     display: "grid",
-                                    placeItems: "center",
-                                    fontSize: "1.25rem"
+                                    placeItems: "center"
                                 }}>
-                                    📝
+                                    <FileEdit size={20} />
                                 </div>
                                 <div>
                                     <h2 style={{ fontSize: "1.2rem", fontWeight: "800", color: "var(--text-main)", margin: 0 }}>
@@ -641,7 +751,7 @@ export default function EmployeePage() {
                                 className="btn-close"
                                 title="Close modal"
                             >
-                                ✕
+                                <X size={18} />
                             </button>
                         </div>
 
@@ -682,6 +792,193 @@ export default function EmployeePage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MY PROFILE MODAL */}
+            {profileModalOpen && (
+                <div className="modal-backdrop">
+                    <div className="modal-card" style={{ maxWidth: "560px" }}>
+                        {/* Header */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "18px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                <div style={{
+                                    width: "44px",
+                                    height: "44px",
+                                    borderRadius: "12px",
+                                    background: "rgba(99, 102, 241, 0.15)",
+                                    border: "1px solid rgba(99, 102, 241, 0.3)",
+                                    display: "grid",
+                                    placeItems: "center"
+                                }}>
+                                    <UserCircle size={22} style={{ color: "#6366f1" }} />
+                                </div>
+                                <div>
+                                    <h2 style={{ fontSize: "1.2rem", fontWeight: "800", color: "var(--text-main)", margin: 0 }}>
+                                        My Profile & Skills
+                                    </h2>
+                                    <p style={{ fontSize: "0.825rem", color: "var(--text-muted)", margin: "3px 0 0" }}>
+                                        Update your technical skills, domain, and experience
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setProfileModalOpen(false)}
+                                className="btn-close"
+                                title="Close modal"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {profileError && (
+                            <div className="alert-banner alert-error" style={{ marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+                                <AlertCircle size={15} />
+                                <span>{profileError}</span>
+                            </div>
+                        )}
+
+                        {profileSuccess && (
+                            <div className="alert-banner alert-success" style={{ marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+                                <CheckCircle2 size={15} />
+                                <span>{profileSuccess}</span>
+                            </div>
+                        )}
+
+                        {loadingProfile ? (
+                            <div style={{ padding: "30px", textAlign: "center", color: "var(--text-muted)" }}>
+                                Loading profile details...
+                            </div>
+                        ) : profile ? (
+                            <form onSubmit={handleSaveProfile} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                                {/* READ-ONLY ENTERPRISE CREDENTIALS */}
+                                <div className="card" style={{ padding: "16px", background: "var(--bg-subtle)", borderRadius: "10px" }}>
+                                    <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px", display: "flex", alignItems: "center", gap: "6px" }}>
+                                        <Shield size={13} style={{ color: "#10b981" }} />
+                                        <span>Enterprise Corporate Identity (HR Managed)</span>
+                                    </div>
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                                        <div>
+                                            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block" }}>Full Name</span>
+                                            <span style={{ fontWeight: "700", color: "var(--text-main)", fontSize: "0.9rem" }}>{profile.name}</span>
+                                        </div>
+                                        <div>
+                                            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block" }}>Permanent Serial ID</span>
+                                            <span className="id-badge">#{String(profile.id).padStart(3, '0')}</span>
+                                        </div>
+                                        <div>
+                                            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block" }}>Role Code</span>
+                                            <span style={{ fontFamily: "monospace", color: "var(--primary)", fontWeight: "700", fontSize: "0.85rem" }}>
+                                                {profile.employeeCode}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block" }}>Department</span>
+                                            <span style={{ fontWeight: "600", color: "var(--text-main)", fontSize: "0.85rem" }}>
+                                                {profile.departmentName || "General"}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block" }}>Designation / Title</span>
+                                            <span style={{ fontSize: "0.82rem", color: "#93c5fd", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                                                <Briefcase size={12} />
+                                                <span>{profile.designation || "Software Engineer"}</span>
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block" }}>Reporting Manager</span>
+                                            <span style={{ fontSize: "0.82rem", color: "#c4b5fd", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                                                <UserCheck size={12} />
+                                                <span>{profile.managerName ? `${profile.managerName} (${profile.managerCode})` : "Unassigned"}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* EDITABLE EMPLOYEE ATTRIBUTES */}
+                                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", display: "flex", alignItems: "center", gap: "6px" }}>
+                                    <Sparkles size={13} style={{ color: "#a855f7" }} />
+                                    <span>Professional Attributes (Employee Managed)</span>
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Key Technical Skills *</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        required
+                                        value={skillInput}
+                                        onChange={(e) => setSkillInput(e.target.value)}
+                                        placeholder="e.g. Java, Spring Boot, PostgreSQL, Docker, React"
+                                    />
+                                    <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: "3px", display: "block" }}>
+                                        Comma-separated list of your primary languages, tools, and frameworks
+                                    </span>
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Domain Specialization *</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        required
+                                        value={domainInput}
+                                        onChange={(e) => setDomainInput(e.target.value)}
+                                        placeholder="e.g. Backend Architecture, Enterprise FinTech"
+                                    />
+                                </div>
+
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                                    <div className="form-group">
+                                        <label className="form-label">Base Location *</label>
+                                        <input
+                                            type="text"
+                                            className="form-input"
+                                            required
+                                            value={locationInput}
+                                            onChange={(e) => setLocationInput(e.target.value)}
+                                            placeholder="e.g. Hyderabad, India"
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label className="form-label">Experience (Years) *</label>
+                                        <input
+                                            type="number"
+                                            className="form-input"
+                                            required
+                                            min={0}
+                                            max={50}
+                                            value={expYearsInput}
+                                            onChange={(e) => setExpYearsInput(e.target.value)}
+                                            placeholder="e.g. 4"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        onClick={() => setProfileModalOpen(false)}
+                                        disabled={savingProfile}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="btn btn-primary"
+                                        disabled={savingProfile}
+                                        style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                                    >
+                                        <CheckCircle2 size={15} />
+                                        <span>{savingProfile ? "Saving Profile..." : "Save Profile Changes"}</span>
+                                    </button>
+                                </div>
+                            </form>
+                        ) : null}
                     </div>
                 </div>
             )}

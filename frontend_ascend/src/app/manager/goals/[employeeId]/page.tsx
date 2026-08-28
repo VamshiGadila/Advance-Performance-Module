@@ -15,6 +15,20 @@ import {
 } from "@/services/managerService";
 import { Cycle } from "@/services/hrService";
 import Pagination from "@/components/Pagination";
+import {
+    ArrowLeft,
+    Lock,
+    AlertCircle,
+    CheckCircle2,
+    Target,
+    Search,
+    FilterX,
+    Calendar,
+    Edit3,
+    Trash2,
+    PlusCircle,
+    X
+} from "lucide-react";
 
 export default function ManagerGoalStudio() {
     const params = useParams<{ employeeId: string }>();
@@ -283,12 +297,15 @@ export default function ManagerGoalStudio() {
         return (
             <section>
                 <div style={{ marginBottom: "18px" }}>
-                    <Link href="/manager" className="btn btn-secondary btn-sm" style={{ marginBottom: "16px" }}>
-                        ← Back to My Team
+                    <Link href="/manager" className="btn btn-secondary btn-sm" style={{ marginBottom: "16px", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                        <ArrowLeft size={14} />
+                        <span>Back to My Team</span>
                     </Link>
                 </div>
                 <div className="card" style={{ padding: "40px", textAlign: "center" }}>
-                    <div style={{ fontSize: "3rem", marginBottom: "12px" }}>🔒</div>
+                    <div style={{ display: "inline-flex", padding: "16px", background: "rgba(239, 68, 68, 0.1)", borderRadius: "50%", color: "#ef4444", marginBottom: "16px" }}>
+                        <Lock size={36} />
+                    </div>
                     <h2 style={{ fontSize: "1.35rem", fontWeight: "800", marginBottom: "8px" }}>Employee Not in Your Team</h2>
                     <p style={{ color: "var(--text-muted)", maxWidth: "480px", margin: "0 auto 20px" }}>
                         Employee #{employeeId} is not assigned to your direct team. Only employees assigned to you by HR can be managed here.
@@ -317,7 +334,8 @@ export default function ManagerGoalStudio() {
                         marginBottom: "12px"
                     }}
                 >
-                    ← Back to My Team
+                    <ArrowLeft size={14} />
+                    <span>Back to My Team</span>
                 </Link>
                 <div className="page-header">
                     <div>
@@ -331,15 +349,15 @@ export default function ManagerGoalStudio() {
 
             {/* ALERTS */}
             {error && (
-                <div className="alert alert-error">
-                    <span>⚠️</span>
+                <div className="alert alert-error" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <AlertCircle size={18} />
                     <span>{error}</span>
                 </div>
             )}
 
             {success && (
-                <div className="alert alert-success">
-                    <span>✅</span>
+                <div className="alert alert-success" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <CheckCircle2 size={18} />
                     <span>{success}</span>
                 </div>
             )}
@@ -392,8 +410,8 @@ export default function ManagerGoalStudio() {
 
             {/* INACTIVE CYCLE WARNING */}
             {!isCycleActive && (
-                <div className="alert alert-info">
-                    <span>ℹ️</span>
+                <div className="alert alert-info" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <AlertCircle size={18} />
                     <span>
                         Selected cycle (<strong>{selectedCycle?.name || "None"}</strong>) is <strong>{selectedCycle?.status || "CLOSED"}</strong>.
                         Goals can only be added or modified in an <strong>ACTIVE</strong> cycle.
@@ -427,13 +445,15 @@ export default function ManagerGoalStudio() {
                 </div>
 
                 {roundedTotal === 100 && (
-                    <div style={{ fontSize: "0.8rem", color: "var(--success-text)", fontWeight: "600", marginTop: "8px" }}>
-                        ✨ Perfect! 100% of goal weight has been allocated for this review cycle.
+                    <div style={{ fontSize: "0.8rem", color: "var(--success-text)", fontWeight: "600", marginTop: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <CheckCircle2 size={14} />
+                        <span>100% of goal weight has been allocated for this review cycle.</span>
                     </div>
                 )}
                 {roundedTotal > 100 && (
-                    <div style={{ fontSize: "0.8rem", color: "var(--danger-text)", fontWeight: "600", marginTop: "8px" }}>
-                        ⚠️ Total weight exceeds 100%. Please adjust or lower goal weights.
+                    <div style={{ fontSize: "0.8rem", color: "var(--danger-text)", fontWeight: "600", marginTop: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <AlertCircle size={14} />
+                        <span>Total weight exceeds 100%. Please adjust or lower goal weights.</span>
                     </div>
                 )}
             </div>
@@ -441,24 +461,27 @@ export default function ManagerGoalStudio() {
             <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: "24px", alignItems: "start" }}>
                 {/* EXISTING GOALS LIST */}
                 <div className="card">
-                    <div className="card-header" style={{ marginBottom: "14px" }}>
-                        <h2 className="card-title">
-                            🎯 Allocated Goals ({allGoals.length})
+                    <div className="card-header" style={{ marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
+                        <Target size={18} style={{ color: "var(--primary)" }} />
+                        <h2 className="card-title" style={{ margin: 0 }}>
+                            Allocated Goals ({allGoals.length})
                         </h2>
                     </div>
 
                     {/* SEARCH & FILTER BAR */}
                     <div style={{ display: "flex", gap: "10px", marginBottom: "16px", flexWrap: "wrap", alignItems: "center" }}>
-                        <div style={{ flex: "1 1 160px" }}>
+                        <div style={{ flex: "1 1 160px", position: "relative" }}>
+                            <Search size={14} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
                             <input
                                 type="text"
                                 className="form-input"
-                                placeholder="🔍 Search goals..."
+                                placeholder="Search goals..."
                                 value={searchTerm}
                                 onChange={(e) => {
                                     setSearchTerm(e.target.value);
                                     setPage(0);
                                 }}
+                                style={{ paddingLeft: "32px", width: "100%" }}
                             />
                         </div>
 
@@ -502,8 +525,10 @@ export default function ManagerGoalStudio() {
                                     setScopeFilter("");
                                     setPage(0);
                                 }}
+                                style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
                             >
-                                ✕
+                                <FilterX size={14} />
+                                <span>Clear</span>
                             </button>
                         )}
                     </div>
@@ -569,24 +594,29 @@ export default function ManagerGoalStudio() {
                                         )}
 
                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "10px", borderTop: "1px solid var(--border)" }}>
-                                            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                                                📅 Due: {g.dueDate || "No deadline"}
+                                            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "6px" }}>
+                                                <Calendar size={13} />
+                                                <span>Due: {g.dueDate || "No deadline"}</span>
                                             </div>
                                             <div style={{ display: "flex", gap: "8px" }}>
                                                 <button
                                                     type="button"
                                                     className="btn btn-secondary btn-sm"
                                                     onClick={() => openEditModal(g)}
+                                                    style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
                                                 >
-                                                    ✏️ Edit
+                                                    <Edit3 size={12} />
+                                                    <span>Edit</span>
                                                 </button>
                                                 <button
                                                     type="button"
                                                     className="btn btn-danger btn-sm"
                                                     onClick={() => handleDeleteGoal(g.id, g.title)}
                                                     disabled={deletingId === g.id}
+                                                    style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
                                                 >
-                                                    {deletingId === g.id ? "Deleting..." : "🗑️ Delete"}
+                                                    <Trash2 size={12} />
+                                                    <span>{deletingId === g.id ? "Deleting..." : "Delete"}</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -613,8 +643,9 @@ export default function ManagerGoalStudio() {
 
                 {/* CREATE GOAL FORM */}
                 <div className="card">
-                    <div className="card-header">
-                        <h2 className="card-title">➕ Add New Goal</h2>
+                    <div className="card-header" style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
+                        <PlusCircle size={18} style={{ color: "var(--primary)" }} />
+                        <h2 className="card-title" style={{ margin: 0 }}>Add New Goal</h2>
                     </div>
 
                     <form onSubmit={handleCreateGoal} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -727,7 +758,7 @@ export default function ManagerGoalStudio() {
                                 className="btn-close"
                                 onClick={() => setEditingGoal(null)}
                             >
-                                ✕
+                                <X size={18} />
                             </button>
                         </div>
 

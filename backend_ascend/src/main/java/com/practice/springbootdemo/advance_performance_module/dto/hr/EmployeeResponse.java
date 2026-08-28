@@ -1,10 +1,9 @@
 package com.practice.springbootdemo.advance_performance_module.dto.hr;
 
-
 import com.practice.springbootdemo.advance_performance_module.entity.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(description = "Employee profile and department details response")
+@Schema(description = "Employee profile, designation, manager and department details response")
 public record EmployeeResponse(
         Long id,
         String employeeCode,
@@ -13,13 +12,34 @@ public record EmployeeResponse(
         Long departmentId,
         String departmentName,
         Role role,
+        String designation,
+        Long managerId,
+        String managerName,
+        String managerCode,
         String skill,
         String location,
         String domain,
         Integer experienceYears,
         boolean active
 ) {
+    public EmployeeResponse(
+            Long id,
+            String employeeCode,
+            String name,
+            String email,
+            Long departmentId,
+            String departmentName,
+            Role role,
+            String skill,
+            String location,
+            String domain,
+            Integer experienceYears,
+            boolean active
+    ) {
+        this(id, employeeCode, name, email, departmentId, departmentName, role, null, null, null, null, skill, location, domain, experienceYears, active);
+    }
+
     public EmployeeResponse(Long id, String employeeCode, String name, String email, Long departmentId, Role role) {
-        this(id, employeeCode, name, email, departmentId, null, role, null, null, null, null, true);
+        this(id, employeeCode, name, email, departmentId, null, role, null, null, null, null, null, null, null, null, true);
     }
 }

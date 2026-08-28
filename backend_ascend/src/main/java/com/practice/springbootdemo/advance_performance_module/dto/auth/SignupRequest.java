@@ -21,5 +21,10 @@ public record SignupRequest(
         @NotBlank(message = "Confirm password is required")
         String confirmPassword,
         @NotNull(message = "Department ID is required")
-        Long departmentId
-) {}
+        Long departmentId,
+        String designation
+) {
+    public SignupRequest(String name, String email, String password, String confirmPassword, Long departmentId) {
+        this(name, email, password, confirmPassword, departmentId, null);
+    }
+}

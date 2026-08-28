@@ -3,6 +3,17 @@
 import { useEffect, useState } from "react";
 import { launchCycle, closeCycle, createCycle, searchCycles, Cycle } from "@/services/hrService";
 import Pagination from "@/components/Pagination";
+import {
+    Calendar,
+    Search,
+    FilterX,
+    Play,
+    Lock,
+    PlusCircle,
+    CheckCircle2,
+    AlertCircle,
+    Clock
+} from "lucide-react";
 
 export default function CyclesPage() {
     const [cycles, setCycles] = useState<Cycle[]>([]);
@@ -59,7 +70,7 @@ export default function CyclesPage() {
                 startDate,
                 endDate
             });
-            setSuccess(`🎉 Performance Cycle "${created.name}" created successfully as DRAFT!`);
+            setSuccess(`Performance Cycle "${created.name}" created successfully as DRAFT!`);
             setName("");
             loadCycles();
         } catch (e) {
@@ -76,7 +87,7 @@ export default function CyclesPage() {
 
         try {
             await launchCycle(id);
-            setSuccess(`🚀 Performance Cycle "${cycleName}" is now ACTIVE! Previous cycles were closed.`);
+            setSuccess(`Performance Cycle "${cycleName}" is now ACTIVE! Previous cycles were closed.`);
             loadCycles();
         } catch (e) {
             setError(e instanceof Error ? e.message : "Failed to launch cycle");
@@ -92,7 +103,7 @@ export default function CyclesPage() {
 
         try {
             await closeCycle(id);
-            setSuccess(`🔒 Performance Cycle "${cycleName}" has been CLOSED.`);
+            setSuccess(`Performance Cycle "${cycleName}" has been CLOSED.`);
             loadCycles();
         } catch (e) {
             setError(e instanceof Error ? e.message : "Failed to close cycle");
@@ -115,15 +126,15 @@ export default function CyclesPage() {
             </div>
 
             {error && (
-                <div className="alert alert-error">
-                    <span className="alert-icon">!</span>
+                <div className="alert alert-error" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <AlertCircle size={18} />
                     <span>{error}</span>
                 </div>
             )}
 
             {success && (
-                <div className="alert alert-success">
-                    <span className="alert-icon">✓</span>
+                <div className="alert alert-success" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <CheckCircle2 size={18} />
                     <span>{success}</span>
                 </div>
             )}
@@ -136,8 +147,9 @@ export default function CyclesPage() {
                             <span style={{ fontSize: "0.85rem", opacity: 0.9 }}>ID: #{activeCycle.id}</span>
                         </div>
                         <h2>{activeCycle.name}</h2>
-                        <p>
-                            🗓️ Active Review Timeline: <strong>{activeCycle.startDate}</strong> through <strong>{activeCycle.endDate}</strong>
+                        <p style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <Calendar size={14} />
+                            <span>Active Review Timeline: <strong>{activeCycle.startDate}</strong> through <strong>{activeCycle.endDate}</strong></span>
                         </p>
                     </div>
                 </div>
@@ -147,16 +159,18 @@ export default function CyclesPage() {
                 <div className="card">
                     {/* SEARCH & FILTER CONTROLS */}
                     <div style={{ display: "flex", gap: "12px", marginBottom: "18px", flexWrap: "wrap", alignItems: "center" }}>
-                        <div style={{ flex: "1 1 200px" }}>
+                        <div style={{ flex: "1 1 200px", position: "relative" }}>
+                            <Search size={15} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
                             <input
                                 type="text"
                                 className="form-input"
-                                placeholder="🔍 Search cycle name..."
+                                placeholder="Search cycle name..."
                                 value={searchName}
                                 onChange={(e) => {
                                     setSearchName(e.target.value);
                                     setPage(0);
                                 }}
+                                style={{ paddingLeft: "34px", width: "100%" }}
                             />
                         </div>
 
@@ -190,8 +204,10 @@ export default function CyclesPage() {
                                     setStatusFilter("");
                                     setPage(0);
                                 }}
+                                style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
                             >
-                                ✕ Clear
+                                <FilterX size={14} />
+                                <span>Clear</span>
                             </button>
                         )}
                     </div>
@@ -243,11 +259,15 @@ export default function CyclesPage() {
                                                                         ? "pill-closed"
                                                                         : "pill-draft"
                                                                 }`}
+                                                            style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
                                                         >
-                                                            {c.status === "ACTIVE" && "🟢 "}
-                                                            {c.status === "CLOSED" && "🔴 "}
-                                                            {c.status === "DRAFT" && "⚪ "}
-                                                            {c.status}
+                                                            <span style={{
+                                                                width: "6px",
+                                                                height: "6px",
+                                                                borderRadius: "50%",
+                                                                background: c.status === "ACTIVE" ? "#10b981" : c.status === "CLOSED" ? "#ef4444" : "#94a3b8"
+                                                            }} />
+                                                            <span>{c.status}</span>
                                                         </span>
                                                     </td>
                                                     <td style={{ textAlign: "right" }}>
@@ -258,8 +278,10 @@ export default function CyclesPage() {
                                                                     className="btn btn-primary btn-sm"
                                                                     onClick={() => handleLaunch(c.id, c.name)}
                                                                     disabled={isProcessing}
+                                                                    style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
                                                                 >
-                                                                    {isProcessing ? "..." : "🚀 Launch"}
+                                                                    <Play size={12} fill="currentColor" />
+                                                                    <span>{isProcessing ? "..." : "Launch"}</span>
                                                                 </button>
                                                             )}
                                                             {c.status === "ACTIVE" && (
@@ -268,8 +290,10 @@ export default function CyclesPage() {
                                                                     className="btn btn-danger btn-sm"
                                                                     onClick={() => handleClose(c.id, c.name)}
                                                                     disabled={isProcessing}
+                                                                    style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
                                                                 >
-                                                                    {isProcessing ? "..." : "🔒 Close"}
+                                                                    <Lock size={12} />
+                                                                    <span>{isProcessing ? "..." : "Close"}</span>
                                                                 </button>
                                                             )}
                                                             {c.status === "CLOSED" && (
@@ -303,8 +327,9 @@ export default function CyclesPage() {
                 </div>
 
                 <div className="card">
-                    <div className="card-header">
-                        <h2 className="card-title">➕ Create New Cycle</h2>
+                    <div className="card-header" style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+                        <PlusCircle size={18} style={{ color: "var(--primary)" }} />
+                        <h2 className="card-title" style={{ fontSize: "1.1rem", margin: 0 }}>Create New Cycle</h2>
                     </div>
 
                     <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>

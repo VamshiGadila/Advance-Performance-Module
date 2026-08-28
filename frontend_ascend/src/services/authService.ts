@@ -86,3 +86,41 @@ export async function logoutApi(): Promise<void> {
         // Ignore if already unauthenticated
     }
 }
+
+export interface UserProfile {
+    id: number;
+    employeeCode: string;
+    name: string;
+    email: string;
+    role: "HR" | "MANAGER" | "EMPLOYEE";
+    departmentId: number | null;
+    departmentName: string | null;
+    designation: string | null;
+    managerId: number | null;
+    managerName: string | null;
+    managerCode: string | null;
+    skill: string | null;
+    domain: string | null;
+    location: string | null;
+    experienceYears: number | null;
+}
+
+export interface UpdateProfileRequest {
+    skill: string;
+    domain: string;
+    location: string;
+    experienceYears: number;
+}
+
+export async function getMyProfile(): Promise<UserProfile> {
+    return api<UserProfile>("/employee/profile", {
+        method: "GET"
+    });
+}
+
+export async function updateMyProfile(data: UpdateProfileRequest): Promise<UserProfile> {
+    return api<UserProfile>("/employee/profile", {
+        method: "PATCH",
+        body: JSON.stringify(data)
+    });
+}

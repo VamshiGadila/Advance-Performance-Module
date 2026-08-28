@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { login, resetPassword } from "@/services/authService";
 import { ThemeToggle } from "@/context/ThemeContext";
+import { KeyRound, X } from "lucide-react";
 
 export default function Login() {
     const router = useRouter();
@@ -342,16 +343,19 @@ export default function Login() {
                 <div className="modal-backdrop">
                     <div className="modal-card" style={{ maxWidth: "460px" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-                            <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: "700", color: "#ffffff" }}>
-                                🔑 Reset Password
-                            </h3>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <KeyRound size={18} style={{ color: "var(--primary)" }} />
+                                <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: "700", color: "#ffffff" }}>
+                                    Reset Password
+                                </h3>
+                            </div>
                             <button
                                 type="button"
                                 onClick={() => setShowForgotModal(false)}
                                 className="btn-close"
                                 title="Close modal"
                             >
-                                ✕
+                                <X size={18} />
                             </button>
                         </div>
 

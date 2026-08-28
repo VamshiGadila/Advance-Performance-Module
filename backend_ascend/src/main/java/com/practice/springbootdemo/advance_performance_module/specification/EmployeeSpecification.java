@@ -17,19 +17,29 @@ public class EmployeeSpecification {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-
             if (criteria.getSearch() != null && !criteria.getSearch().isBlank()) {
-                String term = "%" + criteria.getSearch().trim().toLowerCase() + "%";
-                predicates.add(cb.or(
-                        cb.like(cb.lower(root.get("employeeCode")), term),
-                        cb.like(cb.lower(root.get("name")), term),
-                        cb.like(cb.lower(root.get("email")), term),
-                        cb.like(cb.lower(cb.coalesce(root.get("skill"), "")), term),
-                        cb.like(cb.lower(cb.coalesce(root.get("domain"), "")), term),
-                        cb.like(cb.lower(cb.coalesce(root.get("location"), "")), term)
-                ));
-            } else {
+                String rawSearch = criteria.getSearch().trim();
+                String term = "%" + rawSearch.toLowerCase() + "%";
 
+                List<Predicate> orPredicates = new ArrayList<>();
+                orPredicates.add(cb.like(cb.lower(root.get("employeeCode")), term));
+                orPredicates.add(cb.like(cb.lower(root.get("name")), term));
+                orPredicates.add(cb.like(cb.lower(root.get("email")), term));
+                orPredicates.add(cb.like(cb.lower(cb.coalesce(root.get("skill"), "")), term));
+                orPredicates.add(cb.like(cb.lower(cb.coalesce(root.get("domain"), "")), term));
+                orPredicates.add(cb.like(cb.lower(cb.coalesce(root.get("location"), "")), term));
+
+                String numericOnly = rawSearch.replaceAll("[^0-9]", "");
+                if (!numericOnly.isEmpty()) {
+                    try {
+                        Long parsedId = Long.parseLong(numericOnly);
+                        orPredicates.add(cb.equal(root.get("id"), parsedId));
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+
+                predicates.add(cb.or(orPredicates.toArray(new Predicate[0])));
+            } else {
                 if (criteria.getEmployeeCode() != null && !criteria.getEmployeeCode().isBlank()) {
                     predicates.add(cb.like(cb.lower(root.get("employeeCode")), "%" + criteria.getEmployeeCode().trim().toLowerCase() + "%"));
                 }
@@ -45,37 +55,30 @@ public class EmployeeSpecification {
                 }
             }
 
-            // Role Filter
             if (criteria.getRole() != null) {
                 predicates.add(cb.equal(root.get("role"), criteria.getRole()));
             }
 
-            // Skill Filter
             if (criteria.getSkill() != null && !criteria.getSkill().isBlank()) {
                 predicates.add(cb.like(cb.lower(root.get("skill")), "%" + criteria.getSkill().trim().toLowerCase() + "%"));
             }
 
-            // Work Location Filter
             if (criteria.getLocation() != null && !criteria.getLocation().isBlank()) {
                 predicates.add(cb.like(cb.lower(root.get("location")), "%" + criteria.getLocation().trim().toLowerCase() + "%"));
             }
 
-            // Domain Filter
             if (criteria.getDomain() != null && !criteria.getDomain().isBlank()) {
                 predicates.add(cb.like(cb.lower(root.get("domain")), "%" + criteria.getDomain().trim().toLowerCase() + "%"));
             }
 
-            // Department Filter
             if (criteria.getDepartmentId() != null) {
                 predicates.add(cb.equal(root.get("departmentId"), criteria.getDepartmentId()));
             }
 
-            // Active Status Filter
             if (criteria.getActive() != null) {
                 predicates.add(cb.equal(root.get("active"), criteria.getActive()));
             }
 
-            // Experience Bounds
             if (criteria.getMinExperience() != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("experienceYears"), criteria.getMinExperience()));
             }
@@ -83,7 +86,6 @@ public class EmployeeSpecification {
                 predicates.add(cb.lessThanOrEqualTo(root.get("experienceYears"), criteria.getMaxExperience()));
             }
 
-            // Manager Assigned Subquery
             if (criteria.getManagerId() != null && query != null) {
                 Subquery<Long> subquery = query.subquery(Long.class);
                 Root<ManagerAssignment> assignmentRoot = subquery.from(ManagerAssignment.class);

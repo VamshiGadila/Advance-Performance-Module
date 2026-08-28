@@ -42,8 +42,12 @@ public class DataInitializer {
                 jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
                 jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(100)");
                 jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expiry TIMESTAMP");
+                jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS designation VARCHAR(100)");
                 jdbcTemplate.execute("UPDATE users SET failed_login_attempts = 0 WHERE failed_login_attempts IS NULL");
                 jdbcTemplate.execute("UPDATE users SET password_changed_at = CURRENT_TIMESTAMP WHERE password_changed_at IS NULL");
+                jdbcTemplate.execute("UPDATE users SET designation = 'HR Administrator' WHERE role = 'HR' AND (designation IS NULL OR designation = '')");
+                jdbcTemplate.execute("UPDATE users SET designation = 'Engineering Manager' WHERE role = 'MANAGER' AND (designation IS NULL OR designation = '')");
+                jdbcTemplate.execute("UPDATE users SET designation = 'Software Engineer' WHERE role = 'EMPLOYEE' AND (designation IS NULL OR designation = '')");
             } catch (Exception e) {
                 log.debug("Sequences / columns already exist or managed by database: {}", e.getMessage());
             }
@@ -53,42 +57,45 @@ public class DataInitializer {
             Department frontendDept = departments.findByNameIgnoreCase("Frontend Team").orElse(hrDept);
             Department aiDept = departments.findByNameIgnoreCase("AI & ML Team").orElse(hrDept);
 
-
-
-
             User hr = findOrCreate(
                     users, "HR001", "HR Admin", "hr@ascend.local",
                     Role.HR, hrDept != null ? hrDept.getId() : 1L,
+                    "HR Operations Lead",
                     "HR Management", "Corporate", "Hyderabad", 12, encoder
             );
 
             User manager1 = findOrCreate(
                     users, "MGR001", "Alice Smith", "manager1@ascend.local",
                     Role.MANAGER, backendDept.getId(),
+                    "Backend Engineering Manager",
                     "Java, Microservices, Architecture", "Backend", "Hyderabad", 10, encoder
             );
 
             User manager2 = findOrCreate(
                     users, "MGR002", "Robert Vance", "manager2@ascend.local",
                     Role.MANAGER, aiDept.getId(),
+                    "AI Engineering Manager",
                     "Python, Cloud, Kubernetes", "AI & Cloud", "Bangalore", 8, encoder
             );
 
             User emp1 = findOrCreate(
                     users, "EMP001", "John Doe", "emp1@ascend.local",
                     Role.EMPLOYEE, backendDept.getId(),
+                    "Senior Software Engineer",
                     "Java, Spring Boot, PostgreSQL", "Backend", "Hyderabad", 4, encoder
             );
 
             User emp2 = findOrCreate(
                     users, "EMP002", "Emma Watson", "emp2@ascend.local",
                     Role.EMPLOYEE, frontendDept.getId(),
+                    "Frontend UI/UX Engineer",
                     "React, TypeScript, CSS", "Frontend", "Hyderabad", 3, encoder
             );
 
             User emp3 = findOrCreate(
                     users, "EMP003", "David Miller", "emp3@ascend.local",
                     Role.EMPLOYEE, aiDept.getId(),
+                    "Machine Learning Engineer",
                     "Python, TensorFlow, PyTorch", "AI & ML", "Bangalore", 5, encoder
             );
 
@@ -145,6 +152,7 @@ public class DataInitializer {
             String email,
             Role role,
             Long departmentId,
+            String designation,
             String skill,
             String domain,
             String location,
@@ -154,12 +162,22 @@ public class DataInitializer {
 
         Optional<User> byCode = users.findByEmployeeCode(code);
         if (byCode.isPresent()) {
-            return byCode.get();
+            User existing = byCode.get();
+            if (existing.getDesignation() == null || existing.getDesignation().isBlank()) {
+                existing.setDesignation(designation);
+                users.save(existing);
+            }
+            return existing;
         }
 
         Optional<User> byEmail = users.findByEmailIgnoreCase(email);
         if (byEmail.isPresent()) {
-            return byEmail.get();
+            User existing = byEmail.get();
+            if (existing.getDesignation() == null || existing.getDesignation().isBlank()) {
+                existing.setDesignation(designation);
+                users.save(existing);
+            }
+            return existing;
         }
 
         User user = new User();
@@ -169,6 +187,7 @@ public class DataInitializer {
         user.setPasswordHash(encoder.encode("Password1"));
         user.setRole(role);
         user.setDepartmentId(departmentId);
+        user.setDesignation(designation);
         user.setSkill(skill);
         user.setDomain(domain);
         user.setLocation(location);

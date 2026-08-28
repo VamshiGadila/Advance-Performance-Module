@@ -57,6 +57,8 @@ export function useTheme() {
     return context;
 }
 
+import { Sun, Moon } from "lucide-react";
+
 export function ThemeToggle({ className = "" }: { className?: string }) {
     const { theme, toggleTheme } = useTheme();
 
@@ -67,15 +69,16 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
             className={`theme-toggle-btn ${className}`}
             title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
             aria-label="Toggle theme"
+            style={{ display: "flex", alignItems: "center", gap: "6px" }}
         >
             {theme === "dark" ? (
                 <>
-                    <span style={{ fontSize: "1rem" }}>☀️</span>
+                    <Sun size={15} style={{ color: "#fbbf24" }} />
                     <span className="theme-toggle-label" style={{ fontSize: "0.8rem", fontWeight: "600" }}>Light</span>
                 </>
             ) : (
                 <>
-                    <span style={{ fontSize: "1rem" }}>🌙</span>
+                    <Moon size={15} style={{ color: "#818cf8" }} />
                     <span className="theme-toggle-label" style={{ fontSize: "0.8rem", fontWeight: "600" }}>Dark</span>
                 </>
             )}

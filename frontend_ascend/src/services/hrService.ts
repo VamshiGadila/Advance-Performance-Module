@@ -19,11 +19,27 @@ export interface Employee {
     departmentId: number | null;
     departmentName?: string | null;
     role: "HR" | "MANAGER" | "EMPLOYEE";
+    designation?: string | null;
+    managerId?: number | null;
+    managerName?: string | null;
+    managerCode?: string | null;
     skill?: string | null;
     location?: string | null;
     domain?: string | null;
     experienceYears?: number | null;
     active?: boolean;
+}
+
+export interface ManagerHierarchyNode {
+    managerId: number;
+    managerCode: string;
+    managerName: string;
+    managerEmail: string;
+    managerDesignation?: string | null;
+    departmentId: number | null;
+    departmentName?: string | null;
+    totalReports: number;
+    directReports: Employee[];
 }
 
 export interface Dashboard {
@@ -211,3 +227,19 @@ export const closeCycle = (id: number) =>
     });
 
 export const activateCycle = launchCycle;
+
+export const getAllStaff = () => api<Employee[]>("/hr/employees/all");
+
+export const changeEmployeeManager = (employeeId: number, managerId: number) =>
+    api<Employee>(`/hr/employees/${employeeId}/manager`, {
+        method: "PATCH",
+        body: JSON.stringify({ managerId })
+    });
+
+export const transferEmployeeDepartment = (employeeId: number, departmentId: number) =>
+    api<Employee>(`/hr/employees/${employeeId}/department`, {
+        method: "PATCH",
+        body: JSON.stringify({ departmentId })
+    });
+
+export const getManagerHierarchy = () => api<ManagerHierarchyNode[]>("/hr/employees/hierarchy");

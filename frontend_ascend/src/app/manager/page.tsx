@@ -13,6 +13,19 @@ import {
 } from "@/services/managerService";
 import { Cycle } from "@/services/hrService";
 import Pagination from "@/components/Pagination";
+import {
+    Calendar,
+    AlertCircle,
+    CheckCircle2,
+    XCircle,
+    MessageSquare,
+    FileEdit,
+    Check,
+    X,
+    Search,
+    Mail,
+    Target
+} from "lucide-react";
 
 export default function ManagerDashboard() {
     const [team, setTeam] = useState<TeamMember[]>([]);
@@ -118,15 +131,15 @@ export default function ManagerDashboard() {
             </div>
 
             {error && (
-                <div className="alert alert-error">
-                    <span className="alert-icon">!</span>
+                <div className="alert alert-error" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <AlertCircle size={18} />
                     <span>{error}</span>
                 </div>
             )}
 
             {successMessage && (
-                <div className="alert alert-success">
-                    <span className="alert-icon">✓</span>
+                <div className="alert alert-success" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <CheckCircle2 size={18} />
                     <span>{successMessage}</span>
                 </div>
             )}
@@ -139,14 +152,15 @@ export default function ManagerDashboard() {
                             <span style={{ fontSize: "0.85rem", opacity: 0.9 }}>ID: #{activeCycle.id}</span>
                         </div>
                         <h2>{activeCycle.name}</h2>
-                        <p>
-                            🗓️ Review Period: <strong>{activeCycle.startDate}</strong> to <strong>{activeCycle.endDate}</strong>
+                        <p style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <Calendar size={14} />
+                            <span>Review Period: <strong>{activeCycle.startDate}</strong> to <strong>{activeCycle.endDate}</strong></span>
                         </p>
                     </div>
                 </div>
             ) : (
-                <div className="alert alert-info" style={{ marginBottom: "24px" }}>
-                    <span className="alert-icon">i</span>
+                <div className="alert alert-info" style={{ marginBottom: "24px", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <AlertCircle size={18} />
                     <span>No active performance cycle is currently open. Goals can only be assigned during an active review cycle.</span>
                 </div>
             )}
@@ -175,9 +189,10 @@ export default function ManagerDashboard() {
             {/* PENDING MODIFICATION REQUESTS REVIEW SECTION */}
             {modRequests.length > 0 && (
                 <div className="card" style={{ marginBottom: "28px", border: "1px solid rgba(251, 191, 36, 0.3)", background: "rgba(245, 158, 11, 0.08)" }}>
-                    <div className="card-header" style={{ borderColor: "rgba(251, 191, 36, 0.2)" }}>
-                        <h2 className="card-title" style={{ color: "#fbbf24" }}>
-                            ⚠️ Pending Goal Modification Requests ({modRequests.length})
+                    <div className="card-header" style={{ borderColor: "rgba(251, 191, 36, 0.2)", display: "flex", alignItems: "center", gap: "8px" }}>
+                        <AlertCircle size={18} style={{ color: "#fbbf24" }} />
+                        <h2 className="card-title" style={{ color: "#fbbf24", margin: 0 }}>
+                            Pending Goal Modification Requests ({modRequests.length})
                         </h2>
                     </div>
 
@@ -201,12 +216,14 @@ export default function ManagerDashboard() {
                                     <div style={{ fontWeight: "700", color: "var(--text-main)", fontSize: "1rem" }}>
                                         {mod.employeeName} — Goal: <em>"{mod.goalTitle}"</em>
                                     </div>
-                                    <div style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginTop: "4px" }}>
-                                        💬 Reason: {mod.comment}
+                                    <div style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginTop: "4px", display: "flex", alignItems: "center", gap: "6px" }}>
+                                        <MessageSquare size={13} style={{ color: "var(--text-muted)" }} />
+                                        <span>Reason: {mod.comment}</span>
                                     </div>
                                     {mod.requestedChanges && (
-                                        <div style={{ fontSize: "0.825rem", color: "var(--text-muted)", marginTop: "2px" }}>
-                                            📝 Proposed: {mod.requestedChanges}
+                                        <div style={{ fontSize: "0.825rem", color: "var(--text-muted)", marginTop: "2px", display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <FileEdit size={13} style={{ color: "var(--text-muted)" }} />
+                                            <span>Proposed: {mod.requestedChanges}</span>
                                         </div>
                                     )}
                                 </div>
@@ -220,8 +237,10 @@ export default function ManagerDashboard() {
                                             setReviewAction("APPROVE");
                                             setReviewComment("");
                                         }}
+                                        style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
                                     >
-                                        ✓ Approve
+                                        <Check size={13} />
+                                        <span>Approve</span>
                                     </button>
                                     <button
                                         type="button"
@@ -231,8 +250,10 @@ export default function ManagerDashboard() {
                                             setReviewAction("REJECT");
                                             setReviewComment("");
                                         }}
+                                        style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
                                     >
-                                        ✕ Reject
+                                        <X size={13} />
+                                        <span>Reject</span>
                                     </button>
                                 </div>
                             </div>
@@ -253,17 +274,20 @@ export default function ManagerDashboard() {
                         </div>
                     </div>
 
-                    <input
-                        type="text"
-                        className="form-input"
-                        placeholder="🔍 Filter direct reports..."
-                        value={searchTerm}
-                        onChange={(e) => {
-                            setSearchTerm(e.target.value);
-                            setPage(0);
-                        }}
-                        style={{ maxWidth: "280px" }}
-                    />
+                    <div style={{ position: "relative", maxWidth: "280px", width: "100%" }}>
+                        <Search size={15} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
+                        <input
+                            type="text"
+                            className="form-input"
+                            placeholder="Filter direct reports..."
+                            value={searchTerm}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setPage(0);
+                            }}
+                            style={{ paddingLeft: "34px", width: "100%" }}
+                        />
+                    </div>
                 </div>
 
                 {loading ? (
@@ -319,17 +343,18 @@ export default function ManagerDashboard() {
                                             </span>
                                         </div>
 
-                                        <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "18px" }}>
-                                            ✉️ {member.email}
+                                        <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "18px", display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <Mail size={13} />
+                                            <span>{member.email}</span>
                                         </div>
                                     </div>
 
                                     <Link
                                         href={`/manager/goals/${member.id}`}
                                         className="btn btn-primary"
-                                        style={{ width: "100%", textDecoration: "none" }}
+                                        style={{ width: "100%", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
                                     >
-                                        <span>🎯</span>
+                                        <Target size={15} />
                                         <span>Manage & Assign Goals</span>
                                     </Link>
                                 </div>
@@ -366,11 +391,9 @@ export default function ManagerDashboard() {
                                     background: reviewAction === "APPROVE" ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
                                     color: reviewAction === "APPROVE" ? "#10b981" : "#ef4444",
                                     display: "grid",
-                                    placeItems: "center",
-                                    fontSize: "1.2rem",
-                                    fontWeight: "800"
+                                    placeItems: "center"
                                 }}>
-                                    {reviewAction === "APPROVE" ? "✓" : "✕"}
+                                    {reviewAction === "APPROVE" ? <Check size={20} /> : <X size={20} />}
                                 </div>
                                 <div>
                                     <h2 style={{ fontSize: "1.2rem", fontWeight: "800", color: "var(--text-main)", margin: 0 }}>
@@ -387,7 +410,7 @@ export default function ManagerDashboard() {
                                 className="btn-close"
                                 title="Close modal"
                             >
-                                ✕
+                                <X size={18} />
                             </button>
                         </div>
 
@@ -422,8 +445,10 @@ export default function ManagerDashboard() {
                                     type="submit"
                                     className={`btn ${reviewAction === "APPROVE" ? "btn-primary" : "btn-danger"}`}
                                     disabled={submittingReview}
+                                    style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
                                 >
-                                    {submittingReview ? "Processing..." : reviewAction === "APPROVE" ? "Confirm Approval ✓" : "Confirm Rejection ✕"}
+                                    {reviewAction === "APPROVE" ? <CheckCircle2 size={15} /> : <XCircle size={15} />}
+                                    <span>{submittingReview ? "Processing..." : reviewAction === "APPROVE" ? "Confirm Approval" : "Confirm Rejection"}</span>
                                 </button>
                             </div>
                         </form>

@@ -75,6 +75,10 @@ public class AuthService {
                     return new ResourceNotFoundException("Department not found with ID: " + request.departmentId());
                 });
 
+        String designation = (request.designation() != null && !request.designation().isBlank())
+                ? request.designation().trim()
+                : "Software Engineer";
+
         String employeeCode = userCodeGeneratorService.generateEmployeeCode();
         User employee = User.builder()
                 .employeeCode(employeeCode)
@@ -85,6 +89,7 @@ public class AuthService {
                 .failedLoginAttempts(0)
                 .role(Role.EMPLOYEE)
                 .departmentId(department.getId())
+                .designation(designation)
                 .active(true)
                 .build();
 

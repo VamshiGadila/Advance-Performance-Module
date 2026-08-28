@@ -25,8 +25,14 @@ public record CreateManagerRequest(
         String confirmPassword,
         @NotNull(message = "Department ID is required")
         @Schema(example = "11")
-        Long departmentId
+        Long departmentId,
+        @Schema(example = "Engineering Manager", description = "Manager designation/title")
+        String designation
 ) {
+        public CreateManagerRequest(String name, String email, String password, String confirmPassword, Long departmentId) {
+                this(name, email, password, confirmPassword, departmentId, null);
+        }
+
         public String getEffectivePassword() {
                 if (password != null && !password.isBlank()) {
                         return password;

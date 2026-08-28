@@ -2,26 +2,35 @@ package com.practice.springbootdemo.advance_performance_module.service.hr;
 
 import com.practice.springbootdemo.advance_performance_module.dto.hr.CreateManagerRequest;
 import com.practice.springbootdemo.advance_performance_module.dto.hr.EmployeeResponse;
+import com.practice.springbootdemo.advance_performance_module.dto.hr.ManagerHierarchyResponse;
 import com.practice.springbootdemo.advance_performance_module.entity.Department;
+import com.practice.springbootdemo.advance_performance_module.entity.ManagerAssignment;
 import com.practice.springbootdemo.advance_performance_module.entity.Role;
 import com.practice.springbootdemo.advance_performance_module.entity.User;
 import com.practice.springbootdemo.advance_performance_module.exception.BadRequestException;
 import com.practice.springbootdemo.advance_performance_module.exception.ResourceNotFoundException;
 import com.practice.springbootdemo.advance_performance_module.repository.DepartmentRepository;
+import com.practice.springbootdemo.advance_performance_module.repository.ManagerAssignmentRepository;
 import com.practice.springbootdemo.advance_performance_module.repository.UserRepository;
 import com.practice.springbootdemo.advance_performance_module.service.UserCodeGeneratorService;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Service
 public class EmployeeManagementService {
+
     private final UserRepository users;
     private final DepartmentRepository departmentRepository;
+    private final ManagerAssignmentRepository managerAssignmentRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserCodeGeneratorService userCodeGeneratorService;
     private final DepartmentService departmentService;
@@ -29,12 +38,14 @@ public class EmployeeManagementService {
     public EmployeeManagementService(
             UserRepository users,
             DepartmentRepository departmentRepository,
+            ManagerAssignmentRepository managerAssignmentRepository,
             PasswordEncoder passwordEncoder,
             UserCodeGeneratorService userCodeGeneratorService,
             DepartmentService departmentService
     ) {
         this.users = users;
         this.departmentRepository = departmentRepository;
+        this.managerAssignmentRepository = managerAssignmentRepository;
         this.passwordEncoder = passwordEncoder;
         this.userCodeGeneratorService = userCodeGeneratorService;
         this.departmentService = departmentService;
@@ -54,6 +65,10 @@ public class EmployeeManagementService {
         String managerCode = userCodeGeneratorService.generateManagerCode();
         String passwordToHash = request.getEffectivePassword();
 
+        String designation = (request.designation() != null && !request.designation().isBlank())
+                ? request.designation().trim()
+                : department.getName() + " Manager";
+
         User manager = User.builder()
                 .employeeCode(managerCode)
                 .name(request.name().trim())
@@ -61,6 +76,7 @@ public class EmployeeManagementService {
                 .passwordHash(passwordEncoder.encode(passwordToHash))
                 .role(Role.MANAGER)
                 .departmentId(department.getId())
+                .designation(designation)
                 .active(true)
                 .build();
 
@@ -89,6 +105,15 @@ public class EmployeeManagementService {
         return list;
     }
 
+    @Transactional(readOnly = true)
+    public List<EmployeeResponse> getAllStaff() {
+        log.debug("Retrieving all active organization staff");
+        return users.findAll().stream()
+                .filter(User::isActive)
+                .map(this::mapToResponse)
+                .toList();
+    }
+
     @Transactional
     public EmployeeResponse promoteToManager(Long id) {
         log.info("HR initiating promotion to MANAGER for User ID {}", id);
@@ -111,6 +136,12 @@ public class EmployeeManagementService {
         user.setRole(Role.MANAGER);
         user.setEmployeeCode(newManagerCode);
 
+        // Transition designation to Manager title
+        String deptName = (user.getDepartmentId() != null)
+                ? departmentRepository.findById(user.getDepartmentId()).map(Department::getName).orElse("Team")
+                : "Team";
+        user.setDesignation(deptName + " Manager");
+
         User updated = users.save(user);
         log.info("User ID {} ('{}') successfully promoted to MANAGER. Code transitioned from '{}' to '{}'. Permanent ID #{} preserved.",
                 updated.getId(), updated.getName(), oldCode, updated.getEmployeeCode(), updated.getId());
@@ -118,10 +149,123 @@ public class EmployeeManagementService {
         return mapToResponse(updated);
     }
 
+    @Transactional
+    public EmployeeResponse changeManager(Long employeeId, Long newManagerId) {
+        log.info("HR changing manager for employee ID {} to new manager ID {}", employeeId, newManagerId);
+        if (employeeId.equals(newManagerId)) {
+            throw new BadRequestException("An employee cannot be assigned as their own manager");
+        }
+
+        User employee = users.findById(employeeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with ID: " + employeeId));
+
+        User manager = users.findById(newManagerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Manager not found with ID: " + newManagerId));
+
+        if (manager.getRole() != Role.MANAGER) {
+            throw new BadRequestException("Selected user '" + manager.getName() + "' does not hold the MANAGER role");
+        }
+
+        // Deactivate previous active assignment(s)
+        Optional<ManagerAssignment> currentOpt = managerAssignmentRepository.findByEmployeeIdAndActiveTrue(employeeId);
+        currentOpt.ifPresent(curr -> {
+            curr.setActive(false);
+            managerAssignmentRepository.save(curr);
+        });
+
+        // Create new active assignment
+        ManagerAssignment newAssignment = ManagerAssignment.builder()
+                .employeeId(employeeId)
+                .managerId(newManagerId)
+                .active(true)
+                .assignedDate(LocalDateTime.now())
+                .build();
+        managerAssignmentRepository.save(newAssignment);
+
+        log.info("Employee ID {} ('{}') successfully reassigned to Manager ID {} ('{}')",
+                employeeId, employee.getName(), newManagerId, manager.getName());
+
+        return mapToResponse(employee);
+    }
+
+    @Transactional
+    public EmployeeResponse transferDepartment(Long employeeId, Long newDepartmentId) {
+        log.info("HR transferring employee ID {} to Department ID {}", employeeId, newDepartmentId);
+        User user = users.findById(employeeId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + employeeId));
+
+        Department department = departmentService.getOrThrow(newDepartmentId);
+        user.setDepartmentId(department.getId());
+        User saved = users.save(user);
+
+        log.info("Employee ID {} ('{}') successfully transferred to Department '{}'",
+                employeeId, user.getName(), department.getName());
+
+        return mapToResponse(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ManagerHierarchyResponse> getManagerHierarchy() {
+        log.debug("Building organizational manager hierarchy tree");
+        List<User> managers = users.findByRoleAndActiveTrue(Role.MANAGER);
+
+        return managers.stream().map(mgr -> {
+            String deptName = (mgr.getDepartmentId() != null)
+                    ? departmentRepository.findById(mgr.getDepartmentId()).map(Department::getName).orElse("General")
+                    : "General";
+
+            List<ManagerAssignment> assignments = managerAssignmentRepository.findByManagerIdAndActiveTrue(mgr.getId());
+            List<EmployeeResponse> directReports = assignments.stream()
+                    .map(a -> users.findById(a.getEmployeeId()).orElse(null))
+                    .filter(Objects::nonNull)
+                    .filter(User::isActive)
+                    .map(this::mapToResponse)
+                    .toList();
+
+            String designation = (mgr.getDesignation() != null && !mgr.getDesignation().isBlank())
+                    ? mgr.getDesignation()
+                    : deptName + " Manager";
+
+            return new ManagerHierarchyResponse(
+                    mgr.getId(),
+                    mgr.getEmployeeCode(),
+                    mgr.getName(),
+                    mgr.getEmail(),
+                    designation,
+                    mgr.getDepartmentId(),
+                    deptName,
+                    directReports.size(),
+                    directReports
+            );
+        }).toList();
+    }
+
     private EmployeeResponse mapToResponse(User user) {
         String deptName = (user.getDepartmentId() != null)
                 ? departmentRepository.findById(user.getDepartmentId()).map(Department::getName).orElse(null)
                 : null;
+
+        String designation = (user.getDesignation() != null && !user.getDesignation().isBlank())
+                ? user.getDesignation()
+                : (user.getRole() == Role.MANAGER ? (deptName != null ? deptName + " Manager" : "Team Manager")
+                   : (user.getRole() == Role.HR ? "HR Administrator" : "Software Engineer"));
+
+        Long managerId = null;
+        String managerName = null;
+        String managerCode = null;
+
+        if (user.getRole() == Role.EMPLOYEE) {
+            Optional<ManagerAssignment> activeAssignment = managerAssignmentRepository.findByEmployeeIdAndActiveTrue(user.getId());
+            if (activeAssignment.isPresent()) {
+                managerId = activeAssignment.get().getManagerId();
+                User mgr = users.findById(managerId).orElse(null);
+                if (mgr != null) {
+                    managerName = mgr.getName();
+                    managerCode = mgr.getEmployeeCode();
+                }
+            }
+        }
+
         return new EmployeeResponse(
                 user.getId(),
                 user.getEmployeeCode(),
@@ -130,11 +274,83 @@ public class EmployeeManagementService {
                 user.getDepartmentId(),
                 deptName,
                 user.getRole(),
+                designation,
+                managerId,
+                managerName,
+                managerCode,
                 user.getSkill(),
                 user.getLocation(),
                 user.getDomain(),
                 user.getExperienceYears(),
                 user.isActive()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public com.practice.springbootdemo.advance_performance_module.dto.employee.UserProfileResponse getUserProfile(Long userId) {
+        User user = users.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+
+        String deptName = (user.getDepartmentId() != null)
+                ? departmentRepository.findById(user.getDepartmentId()).map(Department::getName).orElse(null)
+                : null;
+
+        String designation = (user.getDesignation() != null && !user.getDesignation().isBlank())
+                ? user.getDesignation()
+                : (user.getRole() == Role.MANAGER ? (deptName != null ? deptName + " Manager" : "Team Manager")
+                   : (user.getRole() == Role.HR ? "HR Administrator" : "Software Engineer"));
+
+        Long managerId = null;
+        String managerName = null;
+        String managerCode = null;
+
+        if (user.getRole() == Role.EMPLOYEE) {
+            Optional<ManagerAssignment> activeAssignment = managerAssignmentRepository.findByEmployeeIdAndActiveTrue(user.getId());
+            if (activeAssignment.isPresent()) {
+                managerId = activeAssignment.get().getManagerId();
+                User mgr = users.findById(managerId).orElse(null);
+                if (mgr != null) {
+                    managerName = mgr.getName();
+                    managerCode = mgr.getEmployeeCode();
+                }
+            }
+        }
+
+        return new com.practice.springbootdemo.advance_performance_module.dto.employee.UserProfileResponse(
+                user.getId(),
+                user.getEmployeeCode(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getDepartmentId(),
+                deptName,
+                designation,
+                managerId,
+                managerName,
+                managerCode,
+                user.getSkill(),
+                user.getDomain(),
+                user.getLocation(),
+                user.getExperienceYears()
+        );
+    }
+
+    @Transactional
+    public com.practice.springbootdemo.advance_performance_module.dto.employee.UserProfileResponse updateUserProfile(
+            Long userId,
+            com.practice.springbootdemo.advance_performance_module.dto.employee.UpdateProfileRequest request
+    ) {
+        log.info("Updating profile attributes for User ID {}", userId);
+        User user = users.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+
+        user.setSkill(request.skill().trim());
+        user.setDomain(request.domain().trim());
+        user.setLocation(request.location().trim());
+        user.setExperienceYears(request.experienceYears());
+
+        User saved = users.save(user);
+        log.info("Profile successfully updated for User ID {} ('{}')", saved.getId(), saved.getName());
+        return getUserProfile(saved.getId());
     }
 }

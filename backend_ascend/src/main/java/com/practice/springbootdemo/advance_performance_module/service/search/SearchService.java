@@ -88,20 +88,51 @@ public class SearchService {
         Map<Long, String> deptMap = departmentRepository.findAll().stream()
                 .collect(Collectors.toMap(Department::getId, Department::getName, (a, b) -> a));
 
-        Page<EmployeeResponse> dtoPage = userPage.map(u -> new EmployeeResponse(
-                u.getId(),
-                u.getEmployeeCode(),
-                u.getName(),
-                u.getEmail(),
-                u.getDepartmentId(),
-                u.getDepartmentId() != null ? deptMap.getOrDefault(u.getDepartmentId(), "-") : "-",
-                u.getRole(),
-                u.getSkill(),
-                u.getLocation(),
-                u.getDomain(),
-                u.getExperienceYears(),
-                u.isActive()
-        ));
+        Map<Long, ManagerAssignment> activeAssignMap = assignmentRepository.findByActiveTrue().stream()
+                .collect(Collectors.toMap(ManagerAssignment::getEmployeeId, a -> a, (a, b) -> a));
+
+        Map<Long, User> userMap = userRepository.findAll().stream()
+                .collect(Collectors.toMap(User::getId, u -> u, (a, b) -> a));
+
+        Page<EmployeeResponse> dtoPage = userPage.map(u -> {
+            String deptName = u.getDepartmentId() != null ? deptMap.getOrDefault(u.getDepartmentId(), "-") : "-";
+            String designation = (u.getDesignation() != null && !u.getDesignation().isBlank())
+                    ? u.getDesignation()
+                    : (u.getRole() == Role.MANAGER ? (deptName.equals("-") ? "Team Manager" : deptName + " Manager")
+                       : (u.getRole() == Role.HR ? "HR Administrator" : "Software Engineer"));
+
+            Long mgrId = null;
+            String mgrName = null;
+            String mgrCode = null;
+            if (u.getRole() == Role.EMPLOYEE && activeAssignMap.containsKey(u.getId())) {
+                ManagerAssignment ma = activeAssignMap.get(u.getId());
+                mgrId = ma.getManagerId();
+                User mgr = userMap.get(mgrId);
+                if (mgr != null) {
+                    mgrName = mgr.getName();
+                    mgrCode = mgr.getEmployeeCode();
+                }
+            }
+
+            return new EmployeeResponse(
+                    u.getId(),
+                    u.getEmployeeCode(),
+                    u.getName(),
+                    u.getEmail(),
+                    u.getDepartmentId(),
+                    deptName,
+                    u.getRole(),
+                    designation,
+                    mgrId,
+                    mgrName,
+                    mgrCode,
+                    u.getSkill(),
+                    u.getLocation(),
+                    u.getDomain(),
+                    u.getExperienceYears(),
+                    u.isActive()
+            );
+        });
         return PagedResponse.from(dtoPage);
     }
 
