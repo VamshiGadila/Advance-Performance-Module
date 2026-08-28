@@ -237,8 +237,3 @@ npm run dev
 | **HR Admin** | `hr@ascend.local` | `Password1` | `HR001` |
 | **Manager** | `manager1@ascend.local` | `Password1` | `MGR001` |
 | **Employee** | `employee1_1@ascend.local` | `Password1` | `EMP001` |
-
----
-
-## 📄 License
-This project is licensed under the MIT License.
