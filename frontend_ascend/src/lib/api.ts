@@ -5,10 +5,22 @@ export async function api<T>(
     endpoint: string,
     options: RequestInit = {}
 ): Promise<T> {
-    const token =
+    let token =
         typeof window !== "undefined"
             ? localStorage.getItem("ascend_token")
             : null;
+
+    if (!token && typeof window !== "undefined") {
+        try {
+            const rawUser = localStorage.getItem("ascend_user");
+            if (rawUser) {
+                const parsed = JSON.parse(rawUser);
+                if (parsed?.token && parsed.token !== "OAUTH2_SESSION") {
+                    token = parsed.token;
+                }
+            }
+        } catch {}
+    }
 
     const headers = new Headers(options.headers);
 
@@ -25,6 +37,7 @@ export async function api<T>(
     const response = await fetch(`${API_URL}${endpoint}`, {
         ...options,
         headers,
+        credentials: "include",
         cache: "no-store"
     });
 

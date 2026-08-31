@@ -22,6 +22,8 @@ public final class SecurityUtils {
         Object principal = authentication.getPrincipal();
         if (principal instanceof CustomUserDetails userDetails) {
             return userDetails.getId();
+        } else if (principal instanceof CustomOAuth2User oAuth2User) {
+            return oAuth2User.getId();
         } else if (principal instanceof Long id) {
             return id;
         } else if (principal instanceof String str) {
@@ -43,6 +45,10 @@ public final class SecurityUtils {
     }
 
     public static Role getCurrentUserRole() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof CustomOAuth2User oAuth2User) {
+            return oAuth2User.getRole();
+        }
         return getCurrentUserDetails().getRole();
     }
 }

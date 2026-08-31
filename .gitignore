@@ -46,10 +46,15 @@ frontend_ascend/.env
 # Ignores all secret and local property files
 **/*-local.properties
 **/*-secret.properties
+**/*-local.yaml
+**/*-local.yml
+**/*-secret.yaml
+**/*-secret.yml
 **/*.env
 **/.env*
 !**/.env.example
 !**/*-example.properties
+!**/*-example.yaml
 
 # Ignores SSL keys & certificates
 *.p12

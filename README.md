@@ -237,3 +237,31 @@ npm run dev
 | **HR Admin** | `hr@ascend.local` | `Password1` | `HR001` |
 | **Manager** | `manager1@ascend.local` | `Password1` | `MGR001` |
 | **Employee** | `employee1_1@ascend.local` | `Password1` | `EMP001` |
+
+---
+
+## 🌐 Google OAuth 2.0 Third-Party Authentication
+
+The ASCEND module integrates Google Sign-In / OAuth 2.0 alongside traditional credential-based login.
+
+### 🔄 Authentication vs. Authorization Flow
+1. **User Request**: The user clicks **Continue with Google** on `/login` or `/signup`.
+2. **Delegation (Authentication)**: The browser is redirected to `http://localhost:8080/oauth2/authorization/google`. Google handles user authentication and prompts for consent (`openid`, `profile`, `email`).
+3. **Callback & Code Exchange**: Google redirects to `http://localhost:8080/login/oauth2/code/google`. Spring Security exchanges the authorization code for the user's verified identity.
+4. **User Synchronization & Deduplication**:
+   - If a user with that email already exists in PostgreSQL, their Google Provider ID is linked, and their existing role (`HR`, `MANAGER`, or `EMPLOYEE`) is preserved without creating duplicate accounts.
+   - If the user is new, an Employee account is automatically provisioned with a generated `employee_code` (`EMPxxx`), assigned to the default department, and given the `EMPLOYEE` role.
+5. **Session & Protected APIs (Authorization)**:
+   - An authenticated session is established in Spring Security.
+   - The user is redirected to the Next.js frontend with their profile and role, granting access to their designated workspace (`/hr`, `/manager`, or `/employee`).
+   - Protected endpoints require an authenticated user in the `SecurityContext`.
+
+### 🔑 Required Environment Variables (Do not commit secrets to Git)
+Before running the backend with live Google OAuth:
+```powershell
+$env:GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
+$env:GOOGLE_CLIENT_SECRET="GOCSPX-your-client-secret"
+$env:FRONTEND_OAUTH_REDIRECT_URI="http://localhost:3000/login"
+```
+Or copy `backend_ascend/.env.example` to your local environment file.
+

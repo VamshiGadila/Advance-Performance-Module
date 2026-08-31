@@ -29,10 +29,11 @@ public class EmployeeSpecification {
                 orPredicates.add(cb.like(cb.lower(cb.coalesce(root.get("domain"), "")), term));
                 orPredicates.add(cb.like(cb.lower(cb.coalesce(root.get("location"), "")), term));
 
-                String numericOnly = rawSearch.replaceAll("[^0-9]", "");
-                if (!numericOnly.isEmpty()) {
+                // Match numeric database ID only if the user explicitly searched a number (e.g. "45") or an ID with hash (e.g. "#45")
+                if (rawSearch.matches("^#?\\d+$")) {
                     try {
-                        Long parsedId = Long.parseLong(numericOnly);
+                        String numStr = rawSearch.startsWith("#") ? rawSearch.substring(1) : rawSearch;
+                        Long parsedId = Long.parseLong(numStr);
                         orPredicates.add(cb.equal(root.get("id"), parsedId));
                     } catch (NumberFormatException ignored) {
                     }

@@ -142,7 +142,7 @@ export default function Shell({ children }: ShellProps) {
     const handleLogout = () => {
         logout();
         setUser(null);
-        router.replace("/login");
+        window.location.href = "/login";
     };
 
     const getInitials = (name: string) => {

@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping("/api/employee/profile")
-@PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR')")
+@PreAuthorize("isAuthenticated()")
 @Tag(name = "Employee Profile", description = "Self-service profile and skill management APIs")
 @SecurityRequirement(name = "BearerAuth")
 public class EmployeeProfileController {

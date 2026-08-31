@@ -35,6 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -42,7 +43,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(7);
-
 
         if (tokenBlacklistService.isBlacklisted(token)) {
             log.warn("Blocked request with blacklisted/logged-out JWT token on URI: {}", request.getRequestURI());
@@ -73,6 +73,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 log.warn("Failed to set authentication in SecurityContext: {}", e.getMessage());
             }
         }
+
         filterChain.doFilter(request, response);
     }
 }
