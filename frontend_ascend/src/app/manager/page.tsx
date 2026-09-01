@@ -69,6 +69,12 @@ export default function ManagerDashboard() {
         loadData();
     }, []);
 
+    useEffect(() => {
+        if (!successMessage) return;
+        const timer = setTimeout(() => setSuccessMessage(""), 4000);
+        return () => clearTimeout(timer);
+    }, [successMessage]);
+
     const handleReviewSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!reviewingMod) return;
@@ -131,16 +137,34 @@ export default function ManagerDashboard() {
             </div>
 
             {error && (
-                <div className="alert alert-error" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <AlertCircle size={18} />
-                    <span>{error}</span>
+                <div className="alert alert-error" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <AlertCircle size={18} />
+                        <span>{error}</span>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setError("")}
+                        style={{ background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "grid", placeItems: "center" }}
+                    >
+                        <X size={16} />
+                    </button>
                 </div>
             )}
 
             {successMessage && (
-                <div className="alert alert-success" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <CheckCircle2 size={18} />
-                    <span>{successMessage}</span>
+                <div className="alert alert-success" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <CheckCircle2 size={18} />
+                        <span>{successMessage}</span>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setSuccessMessage("")}
+                        style={{ background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "grid", placeItems: "center" }}
+                    >
+                        <X size={16} />
+                    </button>
                 </div>
             )}
 

@@ -2,15 +2,12 @@ package com.practice.springbootdemo.advance_performance_module.service;
 
 import com.practice.springbootdemo.advance_performance_module.entity.AuthProvider;
 import com.practice.springbootdemo.advance_performance_module.entity.Department;
-import com.practice.springbootdemo.advance_performance_module.entity.ManagerAssignment;
 import com.practice.springbootdemo.advance_performance_module.entity.Role;
 import com.practice.springbootdemo.advance_performance_module.entity.User;
-
 import com.practice.springbootdemo.advance_performance_module.exception.UnauthorizedException;
 import com.practice.springbootdemo.advance_performance_module.repository.DepartmentRepository;
 import com.practice.springbootdemo.advance_performance_module.repository.ManagerAssignmentRepository;
 import com.practice.springbootdemo.advance_performance_module.repository.UserRepository;
-import com.practice.springbootdemo.advance_performance_module.service.UserCodeGeneratorService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -103,7 +100,7 @@ public class OAuth2AuthService {
         log.info("Successfully provisioned new Employee via Google OAuth: ID={}, Code={}, Email={}",
                 savedUser.getId(), savedUser.getEmployeeCode(), savedUser.getEmail());
 
-        // Note: Reporting Manager is NOT auto-assigned. HR Admin assigns reporting managers.
+
         return savedUser;
     }
 }

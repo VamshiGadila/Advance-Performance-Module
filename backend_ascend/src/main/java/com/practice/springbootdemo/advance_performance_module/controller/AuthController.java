@@ -55,6 +55,14 @@ public class AuthController {
         return ApiResponse.success(result, null);
     }
 
+    @PostMapping("/verify-otp")
+    @Operation(summary = "Verify OTP", description = "Verify 6-digit OTP code before proceeding to password reset")
+    public ApiResponse<String> verifyOtp(@Valid @RequestBody com.practice.springbootdemo.advance_performance_module.dto.auth.VerifyOtpRequest request) {
+        log.info("REST: POST /api/auth/verify-otp - OTP validation received for: {}", request.email());
+        String result = authService.verifyOtp(request);
+        return ApiResponse.success(result, null);
+    }
+
     @PostMapping("/reset-password")
     @Operation(summary = "Reset Password with OTP", description = "Reset account password using 6-digit OTP (Unlocks account and invalidates prior JWTs)")
     public ApiResponse<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {

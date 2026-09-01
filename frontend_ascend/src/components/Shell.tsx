@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuthUser, getUser, logout } from "@/lib/auth";
 import { ThemeToggle } from "@/context/ThemeContext";
-import { getMyProfile, updateMyProfile, UserProfile } from "@/services/authService";
+import { getMyProfile, updateMyProfile, UserProfile, UpdateProfileRequest } from "@/services/authService";
 
 import {
     LayoutDashboard,
@@ -20,7 +20,11 @@ import {
     Briefcase,
     X,
     CheckCircle2,
-    AlertCircle
+    AlertCircle,
+    Lock,
+    Key,
+    ChevronDown,
+    ChevronUp
 } from "lucide-react";
 
 interface ShellProps {
@@ -38,10 +42,18 @@ export default function Shell({ children }: ShellProps) {
     const [profileModalOpen, setProfileModalOpen] = useState(false);
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loadingProfile, setLoadingProfile] = useState(false);
+    const [nameInput, setNameInput] = useState("");
     const [skillInput, setSkillInput] = useState("");
     const [domainInput, setDomainInput] = useState("");
     const [locationInput, setLocationInput] = useState("");
     const [expYearsInput, setExpYearsInput] = useState<number | string>(0);
+    
+    // Credential Update State
+    const [showPasswordChange, setShowPasswordChange] = useState(false);
+    const [currentPasswordInput, setCurrentPasswordInput] = useState("");
+    const [newPasswordInput, setNewPasswordInput] = useState("");
+    const [confirmPasswordInput, setConfirmPasswordInput] = useState("");
+
     const [savingProfile, setSavingProfile] = useState(false);
     const [profileError, setProfileError] = useState("");
     const [profileSuccess, setProfileSuccess] = useState("");
@@ -51,9 +63,15 @@ export default function Shell({ children }: ShellProps) {
         setLoadingProfile(true);
         setProfileError("");
         setProfileSuccess("");
+        setShowPasswordChange(false);
+        setCurrentPasswordInput("");
+        setNewPasswordInput("");
+        setConfirmPasswordInput("");
+
         getMyProfile()
             .then((data) => {
                 setProfile(data);
+                setNameInput(data.name || "");
                 setSkillInput(data.skill || "");
                 setDomainInput(data.domain || "");
                 setLocationInput(data.location || "");
@@ -68,15 +86,61 @@ export default function Shell({ children }: ShellProps) {
         setSavingProfile(true);
         setProfileError("");
         setProfileSuccess("");
+
+        if (!nameInput.trim()) {
+            setProfileError("Full Name cannot be empty.");
+            setSavingProfile(false);
+            return;
+        }
+
+        if (showPasswordChange && newPasswordInput) {
+            if (newPasswordInput.length < 6) {
+                setProfileError("New password must be at least 6 characters long.");
+                setSavingProfile(false);
+                return;
+            }
+            if (newPasswordInput !== confirmPasswordInput) {
+                setProfileError("New password and confirm password do not match.");
+                setSavingProfile(false);
+                return;
+            }
+        }
+
         try {
-            const updated = await updateMyProfile({
+            const payload: UpdateProfileRequest = {
+                name: nameInput.trim(),
                 skill: skillInput.trim(),
                 domain: domainInput.trim(),
                 location: locationInput.trim(),
-                experienceYears: Number(expYearsInput)
-            });
+                experienceYears: Number(expYearsInput),
+                ...(showPasswordChange && newPasswordInput ? {
+                    currentPassword: currentPasswordInput,
+                    newPassword: newPasswordInput,
+                    confirmPassword: confirmPasswordInput
+                } : {})
+            };
+
+            const updated = await updateMyProfile(payload);
             setProfile(updated);
-            setProfileSuccess("Profile and professional skills updated successfully!");
+            
+            // Sync live state & localStorage so headers & avatar update immediately
+            if (user && updated.name) {
+                const updatedUser: AuthUser = {
+                    ...user,
+                    name: updated.name
+                };
+                setUser(updatedUser);
+                try {
+                    localStorage.setItem("ascend_user", JSON.stringify(updatedUser));
+                } catch {}
+            }
+
+            setProfileSuccess("Profile details and credentials updated successfully!");
+            setShowPasswordChange(false);
+            setCurrentPasswordInput("");
+            setNewPasswordInput("");
+            setConfirmPasswordInput("");
+
             setTimeout(() => {
                 setProfileModalOpen(false);
             }, 1200);
@@ -95,7 +159,8 @@ export default function Shell({ children }: ShellProps) {
 
     const isPublicPage =
         pathname === "/login" ||
-        pathname === "/signup";
+        pathname === "/signup" ||
+        pathname === "/forgot-password";
 
     if (!mounted || isPublicPage) {
         return <>{children}</>;
@@ -141,11 +206,11 @@ export default function Shell({ children }: ShellProps) {
 
     const handleLogout = () => {
         logout();
-        setUser(null);
-        window.location.href = "/login";
+        router.push("/login");
     };
 
     const getInitials = (name: string) => {
+        if (!name) return "US";
         return name
             .split(" ")
             .map((n) => n[0])
@@ -270,7 +335,7 @@ export default function Shell({ children }: ShellProps) {
                                 color: "var(--text-main)",
                                 fontWeight: "600"
                             }}
-                            title="View and edit your personal skills, domain, location and experience"
+                            title="View and edit your personal profile, name, credentials, and skills"
                         >
                             <UserCircle size={15} />
                             <span>My Profile</span>
@@ -301,7 +366,7 @@ export default function Shell({ children }: ShellProps) {
                 {/* GLOBAL MY PROFILE MODAL */}
                 {profileModalOpen && (
                     <div className="modal-backdrop">
-                        <div className="modal-card" style={{ maxWidth: "560px" }}>
+                        <div className="modal-card" style={{ maxWidth: "600px", maxHeight: "90vh", overflowY: "auto" }}>
                             {/* Header */}
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "18px" }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -319,10 +384,10 @@ export default function Shell({ children }: ShellProps) {
                                     </div>
                                     <div>
                                         <h2 style={{ fontSize: "1.2rem", fontWeight: "800", color: "var(--text-main)", margin: 0 }}>
-                                            My Profile & Skills
+                                            My Profile & Credentials
                                         </h2>
                                         <p style={{ fontSize: "0.825rem", color: "var(--text-muted)", margin: "3px 0 0" }}>
-                                            View corporate credentials and update technical skills, domain, and experience
+                                            Update your personal name, security credentials, and professional competencies
                                         </p>
                                     </div>
                                 </div>
@@ -356,23 +421,40 @@ export default function Shell({ children }: ShellProps) {
                                 </div>
                             ) : profile ? (
                                 <form onSubmit={handleSaveProfile} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                                    {/* READ-ONLY ENTERPRISE CREDENTIALS */}
+                                    
+                                    {/* BASIC DETAILS & EDITABLE NAME */}
                                     <div className="card" style={{ padding: "16px", background: "var(--bg-subtle)", borderRadius: "10px" }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>
                                             <Shield size={13} style={{ color: "#10b981" }} />
-                                            <span>Enterprise Corporate Identity (HR Managed)</span>
+                                            <span>Corporate Identity & Basic Details</span>
                                         </div>
+
+                                        <div className="form-group" style={{ marginBottom: "14px" }}>
+                                            <label className="form-label">Full Name *</label>
+                                            <input
+                                                type="text"
+                                                className="form-input"
+                                                required
+                                                value={nameInput}
+                                                onChange={(e) => setNameInput(e.target.value)}
+                                                placeholder="e.g. Vamshi Gadila"
+                                            />
+                                            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: "3px", display: "block" }}>
+                                                You can update your name if misspelled or changed
+                                            </span>
+                                        </div>
+
                                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                                             <div>
-                                                <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block" }}>Full Name</span>
-                                                <span style={{ fontWeight: "700", color: "var(--text-main)", fontSize: "0.9rem" }}>{profile.name}</span>
+                                                <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block" }}>Work Email</span>
+                                                <span style={{ fontWeight: "600", color: "var(--text-main)", fontSize: "0.85rem" }}>{profile.email}</span>
                                             </div>
                                             <div>
                                                 <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block" }}>Permanent Serial ID</span>
                                                 <span className="id-badge">#{String(profile.id).padStart(3, '0')}</span>
                                             </div>
                                             <div>
-                                                <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block" }}>Role Code</span>
+                                                <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block" }}>Employee Code</span>
                                                 <span style={{
                                                     fontFamily: "monospace",
                                                     color: profile.role === "MANAGER" ? "#8b5cf6" : profile.role === "HR" ? "#10b981" : "var(--primary)",
@@ -413,10 +495,10 @@ export default function Shell({ children }: ShellProps) {
                                         </div>
                                     </div>
 
-                                    {/* EDITABLE EMPLOYEE ATTRIBUTES */}
+                                    {/* EDITABLE PROFESSIONAL ATTRIBUTES */}
                                     <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                                         <Sparkles size={13} style={{ color: "#a855f7" }} />
-                                        <span>Professional Attributes ({profile.role === "MANAGER" ? "Manager" : profile.role === "HR" ? "Admin" : "Employee"} Managed)</span>
+                                        <span>Professional Attributes & Competencies</span>
                                     </div>
 
                                     <div className="form-group">
@@ -474,6 +556,71 @@ export default function Shell({ children }: ShellProps) {
                                         </div>
                                     </div>
 
+                                    {/* SECURITY & CREDENTIALS SECTION */}
+                                    <div className="card" style={{ padding: "14px 16px", background: "var(--bg-subtle)", borderRadius: "10px", border: "1px solid var(--border)" }}>
+                                        <div
+                                            onClick={() => setShowPasswordChange(!showPasswordChange)}
+                                            style={{
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                alignItems: "center",
+                                                cursor: "pointer",
+                                                userSelect: "none"
+                                            }}
+                                        >
+                                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                                <Lock size={15} style={{ color: "var(--primary)" }} />
+                                                <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--text-main)" }}>
+                                                    Change Account Password / Credentials
+                                                </span>
+                                            </div>
+                                            <div style={{ color: "var(--text-muted)", display: "flex", alignItems: "center" }}>
+                                                {showPasswordChange ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                            </div>
+                                        </div>
+
+                                        {showPasswordChange && (
+                                            <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: "12px" }}>
+                                                <div className="form-group">
+                                                    <label className="form-label">Current Password (if set)</label>
+                                                    <input
+                                                        type="password"
+                                                        className="form-input"
+                                                        value={currentPasswordInput}
+                                                        onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                                                        placeholder="Enter current password"
+                                                    />
+                                                </div>
+
+                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                                                    <div className="form-group">
+                                                        <label className="form-label">New Password</label>
+                                                        <input
+                                                            type="password"
+                                                            minLength={6}
+                                                            className="form-input"
+                                                            value={newPasswordInput}
+                                                            onChange={(e) => setNewPasswordInput(e.target.value)}
+                                                            placeholder="Min 6 characters"
+                                                        />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label className="form-label">Confirm New Password</label>
+                                                        <input
+                                                            type="password"
+                                                            minLength={6}
+                                                            className="form-input"
+                                                            value={confirmPasswordInput}
+                                                            onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                                                            placeholder="Re-type new password"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Action Buttons */}
                                     <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
                                         <button
                                             type="button"

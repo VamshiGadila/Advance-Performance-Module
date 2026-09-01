@@ -1,0 +1,254 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 2300" width="1300" height="2300" style="background:#09090b; font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
+  <defs>
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="redGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </linearGradient>
+    <linearGradient id="boxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18181b"/>
+      <stop offset="100%" stop-color="#121215"/>
+    </linearGradient>
+    <linearGradient id="diamondGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#312e81"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#818cf8"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#34d399"/>
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f87171"/>
+    </marker>
+    <marker id="arrowCyan" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8"/>
+    </marker>
+    <marker id="arrowAmber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#fbbf24"/>
+    </marker>
+  </defs>
+
+  <!-- Title Banner -->
+  <rect x="50" y="30" width="1200" height="90" rx="16" fill="#18181b" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="650" y="70" text-anchor="middle" fill="url(#headerGrad)" font-size="25" font-weight="800" letter-spacing="0.5">CORE SECURITY &amp; OAUTH 2.0 HANDLER ARCHITECTURE</text>
+  <text x="650" y="98" text-anchor="middle" fill="#94a3b8" font-size="14" font-weight="500">In-Depth Technical Flow of the 7 Key Security Classes • Spring Security 6 • Exception Handlers &amp; OAuth Lifecycle</text>
+
+  <!-- ================= SECTION A: 401 & 403 EXCEPTION HANDLERS ================= -->
+  <rect x="60" y="150" width="1180" height="490" rx="18" fill="#0f0f13" stroke="rgba(239,68,68,0.35)" stroke-width="2" stroke-dasharray="6,6"/>
+  <text x="90" y="185" fill="#f87171" font-size="15" font-weight="700" letter-spacing="1">PART 1: REST API SECURITY EXCEPTION HANDLERS (401 UNAUTHORIZED &amp; 403 FORBIDDEN)</text>
+
+  <!-- Incoming Request Box -->
+  <g transform="translate(350, 205)">
+    <rect width="600" height="70" rx="12" fill="url(#primaryGrad)" stroke="#818cf8" stroke-width="2" filter="url(#shadow)"/>
+    <text x="300" y="32" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="800">Incoming Protected API Request</text>
+    <text x="300" y="55" text-anchor="middle" fill="#e0e7ff" font-size="12" font-family="monospace">e.g. GET /api/employee/goals • POST /api/hr/cycles</text>
+  </g>
+
+  <!-- Line to Diamond 1 -->
+  <line x1="650" y1="275" x2="650" y2="310" stroke="#818cf8" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- Diamond 1: Is Authenticated? -->
+  <g transform="translate(650, 350)">
+    <path d="M 0 -35 L 140 0 L 0 35 L -140 0 Z" fill="url(#diamondGrad)" stroke="#818cf8" stroke-width="2" filter="url(#shadow)"/>
+    <text x="0" y="-5" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">Valid JWT Token</text>
+    <text x="0" y="14" text-anchor="middle" fill="#e0e7ff" font-size="13" font-weight="700">in Authorization?</text>
+  </g>
+
+  <!-- NO Branch -> CustomAuthenticationEntryPoint (401) -->
+  <line x1="510" y1="350" x2="270" y2="350" stroke="#f87171" stroke-width="2.5" marker-end="url(#arrowRed)"/>
+  <text x="390" y="340" text-anchor="middle" fill="#f87171" font-size="12" font-weight="800">NO (Unauthenticated)</text>
+
+  <g transform="translate(90, 400)">
+    <rect width="420" height="215" rx="12" fill="url(#boxGrad)" stroke="#ef4444" stroke-width="1.8" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="6" height="215" rx="3" fill="#ef4444"/>
+    <text x="20" y="28" fill="#f8fafc" font-size="14" font-weight="700">1. CustomAuthenticationEntryPoint</text>
+    <text x="20" y="48" fill="#f87171" font-size="11" font-weight="600">implements AuthenticationEntryPoint</text>
+    <text x="20" y="75" fill="#cbd5e1" font-size="12">• <tspan fill="#f87171" font-weight="700">When it triggers:</tspan> No JWT, expired token, or forged HMAC signature</text>
+    <text x="20" y="115" fill="#cbd5e1" font-size="12">• <tspan fill="#f87171" font-weight="700">Action:</tspan> Overrides default HTML redirect</text>
+    <text x="20" y="135" fill="#cbd5e1" font-size="12">• <tspan fill="#f87171" font-weight="700">Output:</tspan> Returns HTTP 401 JSON:</text>
+    <rect x="20" y="145" width="380" height="55" rx="6" fill="#09090b" stroke="#27272a"/>
+    <text x="30" y="165" fill="#a1a1aa" font-family="monospace" font-size="10">{"message": "Authentication required.",</text>
+    <text x="30" y="185" fill="#a1a1aa" font-family="monospace" font-size="10"> "errorCode": "UNAUTHORIZED", "status": 401}</text>
+  </g>
+
+  <!-- YES Branch -> Role Check -->
+  <line x1="790" y1="350" x2="1030" y2="350" stroke="#34d399" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+  <text x="910" y="340" text-anchor="middle" fill="#34d399" font-size="12" font-weight="800">YES (Valid JWT)</text>
+
+  <!-- Diamond 2: Has Role Permission? -->
+  <g transform="translate(1030, 420)">
+    <path d="M 0 -35 L 140 0 L 0 35 L -140 0 Z" fill="url(#diamondGrad)" stroke="#38bdf8" stroke-width="2" filter="url(#shadow)"/>
+    <text x="0" y="-5" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">Has Required Role?</text>
+    <text x="0" y="14" text-anchor="middle" fill="#e0e7ff" font-size="13" font-weight="700">e.g. @PreAuthorize("HR")</text>
+  </g>
+
+  <!-- Diamond 2 NO -> CustomAccessDeniedHandler (403) -->
+  <line x1="1030" y1="455" x2="1030" y2="495" stroke="#f87171" stroke-width="2.5" marker-end="url(#arrowRed)"/>
+  <text x="1040" y="480" fill="#f87171" font-size="11" font-weight="800">NO</text>
+
+  <g transform="translate(790, 500)">
+    <rect width="420" height="115" rx="12" fill="url(#boxGrad)" stroke="#fbbf24" stroke-width="1.8" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="6" height="115" rx="3" fill="#fbbf24"/>
+    <text x="20" y="25" fill="#f8fafc" font-size="14" font-weight="700">2. CustomAccessDeniedHandler</text>
+    <text x="20" y="42" fill="#fbbf24" font-size="11" font-weight="600">implements AccessDeniedHandler</text>
+    <text x="20" y="65" fill="#cbd5e1" font-size="12">• <tspan fill="#fbbf24" font-weight="700">When it triggers:</tspan> Employee accessing HR endpoint</text>
+    <text x="20" y="85" fill="#cbd5e1" font-size="12">• <tspan fill="#fbbf24" font-weight="700">Output:</tspan> Returns HTTP 403 JSON: <tspan fill="#a1a1aa" font-family="monospace">{"errorCode": "ACCESS_DENIED"}</tspan></text>
+  </g>
+
+  <!-- Diamond 2 YES -> Proceed -->
+  <line x1="1170" y1="420" x2="1230" y2="420" stroke="#34d399" stroke-width="2.5"/>
+  <line x1="1230" y1="420" x2="1230" y2="610" stroke="#34d399" stroke-width="2.5"/>
+  <line x1="1230" y1="610" x2="650" y2="610" stroke="#34d399" stroke-width="2.5"/>
+  <text x="1200" y="410" text-anchor="middle" fill="#34d399" font-size="11" font-weight="800">YES</text>
+
+  <!-- Line to Section B -->
+  <line x1="650" y1="640" x2="650" y2="680" stroke="#818cf8" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- ================= SECTION B: 5 GOOGLE OAUTH 2.0 CLASSES ================= -->
+  <rect x="60" y="685" width="1180" height="1420" rx="18" fill="#0f0f13" stroke="rgba(99,102,241,0.35)" stroke-width="2" stroke-dasharray="6,6"/>
+  <text x="90" y="720" fill="#818cf8" font-size="15" font-weight="700" letter-spacing="1">PART 2: GOOGLE OAUTH 2.0 AUTHENTICATION &amp; USER LIFECYCLE (5 CLASSES)</text>
+
+  <!-- Step 1: User Initiates -->
+  <g transform="translate(350, 740)">
+    <rect width="600" height="70" rx="12" fill="url(#primaryGrad)" stroke="#818cf8" stroke-width="2" filter="url(#shadow)"/>
+    <text x="300" y="32" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="800">Google OAuth 2.0 Login Triggered</text>
+    <text x="300" y="55" text-anchor="middle" fill="#e0e7ff" font-size="12" font-family="monospace">User clicks "Continue with Google" -> /oauth2/authorization/google</text>
+  </g>
+
+  <!-- Line to Step 2 -->
+  <line x1="650" y1="810" x2="650" y2="845" stroke="#818cf8" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- Class 3: CustomOAuth2UserService -->
+  <g transform="translate(90, 850)">
+    <rect width="1120" height="135" rx="14" fill="url(#boxGrad)" stroke="#818cf8" stroke-width="1.8" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="8" height="135" rx="4" fill="#818cf8"/>
+    <text x="30" y="32" fill="#f8fafc" font-size="16" font-weight="700">3. CustomOAuth2UserService.java (The Google Claims Extractor)</text>
+    <rect x="620" y="14" width="260" height="22" rx="6" fill="rgba(99,102,241,0.2)" stroke="#818cf8"/>
+    <text x="750" y="29" text-anchor="middle" fill="#a5b4fc" font-size="11" font-weight="700">extends DefaultOAuth2UserService</text>
+    <text x="30" y="62" fill="#cbd5e1" font-size="13">• <tspan fill="#818cf8" font-weight="700">Method:</tspan> <tspan fill="#a5b4fc" font-family="monospace">public OAuth2User loadUser(OAuth2UserRequest userRequest)</tspan></text>
+    <text x="30" y="85" fill="#cbd5e1" font-size="13">• <tspan fill="#818cf8" font-weight="700">What it does:</tspan> Exchanges authorization code for OpenID token and extracts Google claims: <tspan fill="#34d399" font-family="monospace">sub, email, name, picture</tspan></text>
+    <text x="30" y="108" fill="#cbd5e1" font-size="13">• <tspan fill="#818cf8" font-weight="700">Delegates to:</tspan> Calls <tspan fill="#fbbf24" font-family="monospace">oAuth2AuthService.processOAuth2User(email, name, sub)</tspan> to manage database state</text>
+  </g>
+
+  <!-- Line to Step 3 -->
+  <line x1="650" y1="985" x2="650" y2="1025" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#arrowAmber)"/>
+
+  <!-- Class 4: OAuth2AuthService -->
+  <g transform="translate(90, 1030)">
+    <rect width="1120" height="290" rx="14" fill="url(#boxGrad)" stroke="#fbbf24" stroke-width="1.8" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="8" height="290" rx="4" fill="#fbbf24"/>
+    <text x="30" y="32" fill="#f8fafc" font-size="16" font-weight="700">4. OAuth2AuthService.java (Business &amp; Auto-Provisioning Logic)</text>
+    <rect x="620" y="14" width="220" height="22" rx="6" fill="rgba(245,158,11,0.2)" stroke="#fbbf24"/>
+    <text x="730" y="29" text-anchor="middle" fill="#fde68a" font-size="11" font-weight="700">@Service @Transactional</text>
+    
+    <text x="30" y="65" fill="#cbd5e1" font-size="13">• <tspan fill="#fbbf24" font-weight="700">Method:</tspan> <tspan fill="#fde68a" font-family="monospace">public User processOAuth2User(String email, String name, String googleSub)</tspan></text>
+    <text x="30" y="88" fill="#cbd5e1" font-size="13">• <tspan fill="#fbbf24" font-weight="700">Database Lookup:</tspan> Checks <tspan fill="#a5b4fc" font-family="monospace">userRepository.findByEmailIgnoreCase(cleanEmail)</tspan></text>
+
+    <!-- Branch A: Existing User -->
+    <rect x="30" y="105" width="510" height="165" rx="10" fill="#18181b" stroke="#34d399" stroke-width="1.4"/>
+    <text x="45" y="130" fill="#34d399" font-size="14" font-weight="700">CASE 1: User Already Exists in DB</text>
+    <text x="45" y="155" fill="#cbd5e1" font-size="12">• Verifies <tspan fill="#f87171" font-family="monospace">user.isActive()</tspan> (Throws exception if inactive)</text>
+    <text x="45" y="177" fill="#cbd5e1" font-size="12">• Verifies <tspan fill="#f87171" font-family="monospace">!user.isAccountLocked()</tspan> (Throws exception if locked)</text>
+    <text x="45" y="199" fill="#cbd5e1" font-size="12">• Links <tspan fill="#a5b4fc" font-family="monospace">authProvider=GOOGLE</tspan> &amp; <tspan fill="#a5b4fc" font-family="monospace">providerId=sub</tspan></text>
+    <text x="45" y="221" fill="#cbd5e1" font-size="12">• Resets failed login attempts to 0</text>
+    <text x="45" y="243" fill="#cbd5e1" font-size="12">• Preserves existing role (HR, MANAGER, or EMPLOYEE)</text>
+
+    <!-- Branch B: New User -->
+    <g transform="translate(560, 0)">
+      <rect x="30" y="105" width="500" height="165" rx="10" fill="#18181b" stroke="#38bdf8" stroke-width="1.4"/>
+      <text x="45" y="130" fill="#38bdf8" font-size="14" font-weight="700">CASE 2: New User Auto-Provisioning</text>
+      <text x="45" y="155" fill="#cbd5e1" font-size="12">• Generates Code: <tspan fill="#38bdf8" font-family="monospace">EMP046</tspan> via UserCodeGeneratorService</text>
+      <text x="45" y="177" fill="#cbd5e1" font-size="12">• Assigns default Role: <tspan fill="#38bdf8" font-family="monospace">Role.EMPLOYEE</tspan></text>
+      <text x="45" y="199" fill="#cbd5e1" font-size="12">• Sets <tspan fill="#a5b4fc" font-family="monospace">authProvider=GOOGLE</tspan>, active=true</text>
+      <text x="45" y="221" fill="#cbd5e1" font-size="12">• Assigns default department &amp; designation</text>
+      <text x="45" y="243" fill="#cbd5e1" font-size="12">• Saves new user entity via <tspan fill="#34d399" font-family="monospace">userRepository.save(newUser)</tspan></text>
+    </g>
+  </g>
+
+  <!-- Line to Step 4 -->
+  <line x1="650" y1="1320" x2="650" y2="1355" stroke="#818cf8" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- Class 5: CustomOAuth2User -->
+  <g transform="translate(90, 1360)">
+    <rect width="1120" height="120" rx="14" fill="url(#boxGrad)" stroke="#6366f1" stroke-width="1.8" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="8" height="120" rx="4" fill="#6366f1"/>
+    <text x="30" y="32" fill="#f8fafc" font-size="16" font-weight="700">5. CustomOAuth2User.java (The Security Principal Wrapper)</text>
+    <rect x="580" y="14" width="220" height="22" rx="6" fill="rgba(99,102,241,0.2)" stroke="#818cf8"/>
+    <text x="690" y="29" text-anchor="middle" fill="#a5b4fc" font-size="11" font-weight="700">implements OAuth2User</text>
+    <text x="30" y="62" fill="#cbd5e1" font-size="13">• <tspan fill="#818cf8" font-weight="700">Why it exists:</tspan> Bridges Google's raw attributes with our internal PostgreSQL <tspan fill="#34d399" font-family="monospace">User</tspan> entity</text>
+    <text x="30" y="85" fill="#cbd5e1" font-size="13">• <tspan fill="#818cf8" font-weight="700">Authorities Attached:</tspan> Maps database role to Spring authority: <tspan fill="#34d399" font-family="monospace">List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))</tspan></text>
+    <text x="30" y="108" fill="#cbd5e1" font-size="13">• <tspan fill="#818cf8" font-weight="700">Provides Accessors:</tspan> <tspan fill="#a5b4fc" font-family="monospace">getId(), getEmail(), getName(), getEmployeeCode(), getRole()</tspan></text>
+  </g>
+
+  <!-- Line to Diamond 3 -->
+  <line x1="650" y1="1480" x2="650" y2="1515" stroke="#818cf8" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- Diamond 3: Authentication Result -->
+  <g transform="translate(650, 1555)">
+    <path d="M 0 -35 L 150 0 L 0 35 L -150 0 Z" fill="url(#diamondGrad)" stroke="#818cf8" stroke-width="2" filter="url(#shadow)"/>
+    <text x="0" y="-5" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">OAuth2 Authentication</text>
+    <text x="0" y="14" text-anchor="middle" fill="#e0e7ff" font-size="13" font-weight="700">Status?</text>
+  </g>
+
+  <!-- Branch FAILURE -> OAuth2AuthenticationFailureHandler -->
+  <line x1="500" y1="1555" x2="270" y2="1555" stroke="#f87171" stroke-width="2.5" marker-end="url(#arrowRed)"/>
+  <text x="380" y="1545" text-anchor="middle" fill="#f87171" font-size="12" font-weight="800">FAILED / CANCELLED</text>
+
+  <g transform="translate(90, 1610)">
+    <rect width="420" height="240" rx="14" fill="url(#boxGrad)" stroke="#ef4444" stroke-width="1.8" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="6" height="240" rx="3" fill="#ef4444"/>
+    <text x="20" y="28" fill="#f8fafc" font-size="14" font-weight="700">6. OAuth2AuthenticationFailureHandler</text>
+    <text x="20" y="48" fill="#f87171" font-size="11" font-weight="600">extends SimpleUrlAuthenticationFailureHandler</text>
+    <text x="20" y="75" fill="#cbd5e1" font-size="12">• <tspan fill="#f87171" font-weight="700">When it triggers:</tspan> User cancelled Google prompt, or account is inactive / locked</text>
+    <text x="20" y="115" fill="#cbd5e1" font-size="12">• <tspan fill="#f87171" font-weight="700">Action:</tspan> Extracts failure exception message</text>
+    <text x="20" y="135" fill="#cbd5e1" font-size="12">• <tspan fill="#f87171" font-weight="700">Redirects to:</tspan> Browser login page with query param:</text>
+    <rect x="20" y="145" width="380" height="80" rx="6" fill="#09090b" stroke="#27272a"/>
+    <text x="30" y="170" fill="#f87171" font-family="monospace" font-size="11">http://localhost:3000/login?</text>
+    <text x="30" y="190" fill="#f87171" font-family="monospace" font-size="11">oauth_error=Your+account+is+inactive</text>
+    <text x="30" y="210" fill="#a1a1aa" font-size="10">Next.js UI renders clean red alert banner</text>
+  </g>
+
+  <!-- Branch SUCCESS -> OAuth2AuthenticationSuccessHandler -->
+  <line x1="800" y1="1555" x2="1030" y2="1555" stroke="#34d399" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+  <text x="910" y="1545" text-anchor="middle" fill="#34d399" font-size="12" font-weight="800">SUCCESS</text>
+
+  <g transform="translate(560, 1610)">
+    <rect width="650" height="240" rx="14" fill="url(#boxGrad)" stroke="#10b981" stroke-width="1.8" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="6" height="240" rx="3" fill="#10b981"/>
+    <text x="20" y="28" fill="#f8fafc" font-size="14" font-weight="700">7. OAuth2AuthenticationSuccessHandler</text>
+    <text x="20" y="48" fill="#34d399" font-size="11" font-weight="600">extends SimpleUrlAuthenticationSuccessHandler</text>
+    <text x="20" y="75" fill="#cbd5e1" font-size="12">• <tspan fill="#34d399" font-weight="700">When it triggers:</tspan> Google authentication succeeded and user entity is ready</text>
+    <text x="20" y="98" fill="#cbd5e1" font-size="12">• <tspan fill="#34d399" font-weight="700">Mints JWT Token:</tspan> Calls <tspan fill="#38bdf8" font-family="monospace">jwtService.generate(user)</tspan> with role authorities</text>
+    <text x="20" y="120" fill="#cbd5e1" font-size="12">• <tspan fill="#34d399" font-weight="700">Redirects to:</tspan> Next.js Client Bridge with token &amp; user metadata in URL:</text>
+    <rect x="20" y="135" width="610" height="90" rx="6" fill="#09090b" stroke="#27272a"/>
+    <text x="30" y="160" fill="#34d399" font-family="monospace" font-size="11">http://localhost:3000/login?oauth_success=true&amp;token=&lt;JWT&gt;</text>
+    <text x="30" y="180" fill="#34d399" font-family="monospace" font-size="11">&amp;role=EMPLOYEE&amp;email=user@gmail.com&amp;name=John+Doe</text>
+    <text x="30" y="205" fill="#a1a1aa" font-size="10">Next.js stores JWT in localStorage and forwards user to /employee, /manager, or /hr!</text>
+  </g>
+
+  <!-- Line to Final State -->
+  <line x1="650" y1="1870" x2="650" y2="1920" stroke="#34d399" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+
+  <!-- ================= FINAL STATE ================= -->
+  <g transform="translate(350, 1930)">
+    <rect width="600" height="85" rx="14" fill="url(#emeraldGrad)" stroke="#34d399" stroke-width="2" filter="url(#shadow)"/>
+    <text x="300" y="35" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="800">🎉 Authenticated Enterprise Session Established!</text>
+    <text x="300" y="60" text-anchor="middle" fill="#ecfdf5" font-size="13">JWT saved to localStorage • Full Name &amp; Code displayed in Shell Header</text>
+  </g>
+</svg>

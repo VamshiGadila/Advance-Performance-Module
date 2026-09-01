@@ -9,6 +9,10 @@ import jakarta.validation.constraints.Size;
 
 @Schema(description = "Employee personal profile update payload")
 public record UpdateProfileRequest(
+        @Size(min = 2, max = 100, message = "Full name must be between 2 and 100 characters")
+        @Schema(example = "Vamshi Gadila", description = "User's full corporate name")
+        String name,
+
         @NotBlank(message = "Skills cannot be blank")
         @Size(min = 2, max = 255, message = "Skills must be between 2 and 255 characters")
         @Schema(example = "Java, Spring Boot, PostgreSQL, Docker", description = "Core technical skills")
@@ -28,5 +32,14 @@ public record UpdateProfileRequest(
         @Min(value = 0, message = "Experience years cannot be negative")
         @Max(value = 50, message = "Experience years cannot exceed 50")
         @Schema(example = "4", description = "Total years of professional experience")
-        Integer experienceYears
+        Integer experienceYears,
+
+        @Schema(example = "CurrentPassword123", description = "Current password for credential verification")
+        String currentPassword,
+
+        @Schema(example = "NewSecretPassword123", description = "New account password (min 6 characters)")
+        String newPassword,
+
+        @Schema(example = "NewSecretPassword123", description = "Confirm new account password")
+        String confirmPassword
 ) {}

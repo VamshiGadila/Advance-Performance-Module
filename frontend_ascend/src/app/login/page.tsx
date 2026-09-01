@@ -298,29 +298,17 @@ export default function Login() {
                     <div className="form-group">
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                             <label className="form-label" style={{ marginBottom: 0 }}>Password</label>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowForgotModal(true);
-                                    setForgotEmail(email || "");
-                                    setForgotUsername("");
-                                    setNewPassword("");
-                                    setConfirmNewPassword("");
-                                    setForgotMsg("");
-                                    setForgotErr("");
-                                }}
+                            <Link
+                                href="/forgot-password"
                                 style={{
-                                    background: "none",
-                                    border: "none",
                                     color: "var(--primary)",
                                     fontSize: "0.775rem",
                                     fontWeight: "600",
-                                    cursor: "pointer",
-                                    padding: 0
+                                    textDecoration: "none"
                                 }}
                             >
                                 Forgot Password?
-                            </button>
+                            </Link>
                         </div>
                         <div style={{ position: "relative" }}>
                             <input

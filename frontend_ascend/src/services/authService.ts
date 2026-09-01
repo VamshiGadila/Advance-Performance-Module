@@ -65,9 +65,16 @@ export async function forgotPassword(email: string): Promise<string> {
     });
 }
 
+export async function verifyOtp(email: string, otp: string): Promise<string> {
+    return api<string>("/auth/verify-otp", {
+        method: "POST",
+        body: JSON.stringify({ email, otp })
+    });
+}
+
 export async function resetPassword(data: {
     email: string;
-    username: string;
+    otp: string;
     newPassword: string;
     confirmPassword: string;
 }): Promise<string> {
@@ -106,10 +113,14 @@ export interface UserProfile {
 }
 
 export interface UpdateProfileRequest {
+    name?: string;
     skill: string;
     domain: string;
     location: string;
     experienceYears: number;
+    currentPassword?: string;
+    newPassword?: string;
+    confirmPassword?: string;
 }
 
 export async function getMyProfile(): Promise<UserProfile> {

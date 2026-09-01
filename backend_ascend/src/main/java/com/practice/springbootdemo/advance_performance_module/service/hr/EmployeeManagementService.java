@@ -344,6 +344,39 @@ public class EmployeeManagementService {
         User user = users.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
+        // 1. Update Full Name if provided
+        if (request.name() != null && !request.name().isBlank()) {
+            user.setName(request.name().trim());
+        }
+
+        // 2. Update Credentials if a new password is provided
+        if (request.newPassword() != null && !request.newPassword().isBlank()) {
+            if (request.newPassword().length() < 6) {
+                throw new BadRequestException("New password must be at least 6 characters");
+            }
+            if (!request.newPassword().equals(request.confirmPassword())) {
+                throw new BadRequestException("New password and confirm password do not match");
+            }
+
+            // If user has an existing standard password, require current password verification
+            boolean isOAuthPlaceholder = user.getPasswordHash() != null && user.getPasswordHash().startsWith("{noop}OAUTH2_NO_PASSWORD_");
+            if (user.getPasswordHash() != null && !isOAuthPlaceholder) {
+                if (request.currentPassword() == null || request.currentPassword().isBlank()) {
+                    throw new BadRequestException("Current password is required to update credentials");
+                }
+                if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+                    throw new BadRequestException("Current password is incorrect");
+                }
+            }
+
+            user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+            user.setPasswordChangedAt(LocalDateTime.now());
+            user.setFailedLoginAttempts(0);
+            user.setLockoutUntil(null);
+            log.info("Password credentials updated for User ID {}", userId);
+        }
+
+        // 3. Update Professional Attributes
         user.setSkill(request.skill().trim());
         user.setDomain(request.domain().trim());
         user.setLocation(request.location().trim());

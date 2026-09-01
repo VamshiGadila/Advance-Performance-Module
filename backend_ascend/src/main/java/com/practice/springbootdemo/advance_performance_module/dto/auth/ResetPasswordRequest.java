@@ -9,8 +9,9 @@ public record ResetPasswordRequest(
         @Email(message = "Invalid email format")
         String email,
 
-        @NotBlank(message = "Username, Name, or Employee Code is required")
-        String username,
+        @NotBlank(message = "6-digit OTP code is required")
+        @Size(min = 6, max = 6, message = "OTP must be exactly 6 digits")
+        String otp,
 
         @NotBlank(message = "New password is required")
         @Size(min = 6, message = "Password must be at least 6 characters")

@@ -13,6 +13,7 @@ import com.practice.springbootdemo.advance_performance_module.repository.Departm
 import com.practice.springbootdemo.advance_performance_module.repository.ManagerAssignmentRepository;
 import com.practice.springbootdemo.advance_performance_module.repository.UserRepository;
 import com.practice.springbootdemo.advance_performance_module.security.JwtService;
+import com.practice.springbootdemo.advance_performance_module.security.TokenBlacklistService;
 import com.practice.springbootdemo.advance_performance_module.util.TestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -53,6 +54,12 @@ class AuthServiceTest {
 
     @Mock
     private UserCodeGeneratorService userCodeGeneratorService;
+
+    @Mock
+    private TokenBlacklistService tokenBlacklistService;
+
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private AuthService authService;
@@ -179,5 +186,88 @@ class AuthServiceTest {
                 .hasMessageContaining("Email is already registered");
 
         verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("forgotPassword: generates 6-digit OTP and dispatches email for active user")
+    void forgotPassword_ActiveUser_GeneratesOtpAndSendsEmail() {
+        when(userRepository.findByEmailIgnoreCase("vamshigadila@gmail.com")).thenReturn(Optional.of(dynamicUser));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        String result = authService.forgotPassword(new com.practice.springbootdemo.advance_performance_module.dto.auth.ForgotPasswordRequest("vamshigadila@gmail.com"));
+
+        assertThat(result).contains("Password reset OTP has been sent");
+        verify(emailService, times(1)).sendPasswordResetOtp(eq(dynamicUser.getEmail()), eq(dynamicUser.getName()), anyString());
+        verify(userRepository, times(1)).save(dynamicUser);
+        assertThat(dynamicUser.getResetToken()).isNotNull();
+        assertThat(dynamicUser.getResetToken()).hasSize(6);
+    }
+
+    @Test
+    @DisplayName("resetPassword: successfully updates password when OTP is valid and matching")
+    void resetPassword_ValidOtp_UpdatesPassword() {
+        dynamicUser.setResetToken("123456");
+        dynamicUser.setResetTokenExpiry(java.time.LocalDateTime.now().plusMinutes(10));
+        when(userRepository.findByEmailIgnoreCase("vamshigadila@gmail.com")).thenReturn(Optional.of(dynamicUser));
+        when(passwordEncoder.encode("NewSecret123")).thenReturn("hashed_new_secret");
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        com.practice.springbootdemo.advance_performance_module.dto.auth.ResetPasswordRequest request =
+                new com.practice.springbootdemo.advance_performance_module.dto.auth.ResetPasswordRequest(
+                        "vamshigadila@gmail.com", "123456", "NewSecret123", "NewSecret123"
+                );
+
+        String result = authService.resetPassword(request);
+
+        assertThat(result).contains("Password has been successfully updated");
+        assertThat(dynamicUser.getPasswordHash()).isEqualTo("hashed_new_secret");
+        assertThat(dynamicUser.getResetToken()).isNull();
+        verify(userRepository, times(1)).save(dynamicUser);
+    }
+
+    @Test
+    @DisplayName("verifyOtp: successfully validates matching OTP")
+    void verifyOtp_ValidOtp_ReturnsSuccess() {
+        dynamicUser.setResetToken("654321");
+        dynamicUser.setResetTokenExpiry(java.time.LocalDateTime.now().plusMinutes(10));
+        when(userRepository.findByEmailIgnoreCase("vamshigadila@gmail.com")).thenReturn(Optional.of(dynamicUser));
+
+        com.practice.springbootdemo.advance_performance_module.dto.auth.VerifyOtpRequest request =
+                new com.practice.springbootdemo.advance_performance_module.dto.auth.VerifyOtpRequest("vamshigadila@gmail.com", "654321");
+
+        String result = authService.verifyOtp(request);
+        assertThat(result).contains("OTP code verified successfully");
+    }
+
+    @Test
+    @DisplayName("verifyOtp: throws exception for invalid OTP")
+    void verifyOtp_InvalidOtp_ThrowsException() {
+        dynamicUser.setResetToken("654321");
+        dynamicUser.setResetTokenExpiry(java.time.LocalDateTime.now().plusMinutes(10));
+        when(userRepository.findByEmailIgnoreCase("vamshigadila@gmail.com")).thenReturn(Optional.of(dynamicUser));
+
+        com.practice.springbootdemo.advance_performance_module.dto.auth.VerifyOtpRequest request =
+                new com.practice.springbootdemo.advance_performance_module.dto.auth.VerifyOtpRequest("vamshigadila@gmail.com", "111111");
+
+        assertThatThrownBy(() -> authService.verifyOtp(request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Invalid OTP code");
+    }
+
+    @Test
+    @DisplayName("resetPassword: throws exception when OTP is invalid or expired")
+    void resetPassword_InvalidOtp_ThrowsException() {
+        dynamicUser.setResetToken("123456");
+        dynamicUser.setResetTokenExpiry(java.time.LocalDateTime.now().plusMinutes(10));
+        when(userRepository.findByEmailIgnoreCase("vamshigadila@gmail.com")).thenReturn(Optional.of(dynamicUser));
+
+        com.practice.springbootdemo.advance_performance_module.dto.auth.ResetPasswordRequest request =
+                new com.practice.springbootdemo.advance_performance_module.dto.auth.ResetPasswordRequest(
+                        "vamshigadila@gmail.com", "999999", "NewSecret123", "NewSecret123"
+                );
+
+        assertThatThrownBy(() -> authService.resetPassword(request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Invalid OTP code");
     }
 }

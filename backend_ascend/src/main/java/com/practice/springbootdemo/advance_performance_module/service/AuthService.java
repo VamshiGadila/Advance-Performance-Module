@@ -35,6 +35,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final UserCodeGeneratorService userCodeGeneratorService;
     private final TokenBlacklistService tokenBlacklistService;
+    private final EmailService emailService;
 
     public AuthService(
             UserRepository userRepository,
@@ -43,7 +44,8 @@ public class AuthService {
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             UserCodeGeneratorService userCodeGeneratorService,
-            TokenBlacklistService tokenBlacklistService
+            TokenBlacklistService tokenBlacklistService,
+            EmailService emailService
     ) {
         this.userRepository = userRepository;
         this.departmentRepository = departmentRepository;
@@ -52,6 +54,7 @@ public class AuthService {
         this.jwtService = jwtService;
         this.userCodeGeneratorService = userCodeGeneratorService;
         this.tokenBlacklistService = tokenBlacklistService;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -203,8 +206,8 @@ public class AuthService {
         User user = userRepository.findByEmailIgnoreCase(email).orElse(null);
         if (user == null || !user.isActive()) {
             log.warn("Forgot password requested for non-existent or inactive email '{}'", email);
-            // Return generic message for security
-            return "If an active account exists for " + email + ", a 6-digit reset OTP has been generated.";
+            // Return safe confirmation message
+            return "If an active account exists for " + email + ", a 6-digit reset OTP has been sent to your email.";
         }
 
         // Generate 6-digit cryptographic OTP
@@ -214,7 +217,37 @@ public class AuthService {
         userRepository.save(user);
 
         log.info("Password reset OTP generated for User ID {}: OTP='{}' (Expires in 15 minutes)", user.getId(), otp);
-        return "Password reset OTP sent successfully! [DEMO OTP: " + otp + "]";
+        
+        // Dispatch OTP via EmailService
+        emailService.sendPasswordResetOtp(user.getEmail(), user.getName(), otp);
+
+        return "Password reset OTP has been sent to " + email + ". Please check your inbox and spam folder.";
+    }
+
+    @Transactional(readOnly = true)
+    public String verifyOtp(com.practice.springbootdemo.advance_performance_module.dto.auth.VerifyOtpRequest request) {
+        String email = request.email().trim().toLowerCase();
+        String otp = request.otp().trim();
+
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new BadRequestException("No user found matching email '" + email + "'"));
+
+        if (!user.isActive()) {
+            throw new BadRequestException("Account is inactive. Please contact HR administrator.");
+        }
+
+        if (user.getResetToken() == null || !user.getResetToken().equals(otp)) {
+            log.warn("OTP verification rejected: Invalid OTP for email '{}'", email);
+            throw new BadRequestException("Invalid OTP code. Please check the 6-digit code sent to your email.");
+        }
+
+        if (user.getResetTokenExpiry() == null || user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
+            log.warn("OTP verification rejected: Expired OTP for email '{}'", email);
+            throw new BadRequestException("OTP code has expired. Please request a new password reset OTP.");
+        }
+
+        log.info("OTP successfully verified for User ID: {}, Email: '{}'", user.getId(), email);
+        return "OTP code verified successfully! Please set your new password.";
     }
 
     @Transactional
@@ -224,34 +257,36 @@ public class AuthService {
         }
 
         String email = request.email().trim().toLowerCase();
-        String username = request.username().trim();
+        String otp = request.otp().trim();
 
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new BadRequestException("No user found matching email '" + email + "'"));
-
-        // Match username against employeeCode, name, or email prefix
-        boolean matchesCode = user.getEmployeeCode() != null && user.getEmployeeCode().equalsIgnoreCase(username);
-        boolean matchesName = user.getName() != null && user.getName().equalsIgnoreCase(username);
-        boolean matchesEmailPrefix = email.split("@")[0].equalsIgnoreCase(username);
-
-        if (!matchesCode && !matchesName && !matchesEmailPrefix) {
-            log.warn("Reset password verification failed: Username '{}' does not match user '{}' / '{}'",
-                    username, user.getName(), user.getEmployeeCode());
-            throw new BadRequestException("Username or Employee Code does not match our records for this email.");
-        }
 
         if (!user.isActive()) {
             throw new BadRequestException("Account is inactive. Please contact HR administrator.");
         }
 
-        // Update password and audit fields (Scenario 13: Invalidates previous JWTs)
+        // Verify OTP code and 15-minute expiration
+        if (user.getResetToken() == null || !user.getResetToken().equals(otp)) {
+            log.warn("Password reset rejected: Invalid OTP for email '{}'", email);
+            throw new BadRequestException("Invalid OTP code. Please check the 6-digit code sent to your email.");
+        }
+
+        if (user.getResetTokenExpiry() == null || user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
+            log.warn("Password reset rejected: Expired OTP for email '{}'", email);
+            throw new BadRequestException("OTP code has expired. Please request a new password reset OTP.");
+        }
+
+        // Update password, clear OTP tokens, reset lockout counters, and invalidate previous JWTs
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         user.setPasswordChangedAt(LocalDateTime.now());
+        user.setResetToken(null);
+        user.setResetTokenExpiry(null);
         user.setFailedLoginAttempts(0);
         user.setLockoutUntil(null);
         userRepository.save(user);
 
-        log.info("Password successfully reset for User ID: {}, Code: {}, Email: {}", user.getId(), user.getEmployeeCode(), user.getEmail());
+        log.info("Password successfully reset with OTP for User ID: {}, Code: {}, Email: {}", user.getId(), user.getEmployeeCode(), user.getEmail());
         return "Password has been successfully updated! You can now log in with your new credentials.";
     }
 

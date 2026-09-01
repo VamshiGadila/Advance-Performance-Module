@@ -74,7 +74,6 @@ class OAuth2AuthServiceTest {
         when(userCodeGeneratorService.generateEmployeeCode()).thenReturn("EMP099");
         Department dept = Department.builder().id(1L).name("Engineering").build();
         when(departmentRepository.findAll()).thenReturn(List.of(dept));
-        when(departmentRepository.findById(1L)).thenReturn(Optional.of(dept));
         when(userRepository.save(any(User.class))).thenAnswer(inv -> {
             User u = inv.getArgument(0);
             u.setId(200L);

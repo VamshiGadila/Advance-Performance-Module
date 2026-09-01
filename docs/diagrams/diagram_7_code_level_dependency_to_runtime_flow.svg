@@ -1,0 +1,258 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 2150" width="1300" height="2150" style="background:#09090b; font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
+  <defs>
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <linearGradient id="boxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18181b"/>
+      <stop offset="100%" stop-color="#121215"/>
+    </linearGradient>
+    <linearGradient id="diamondGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#312e81"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#818cf8"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#34d399"/>
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f87171"/>
+    </marker>
+    <marker id="arrowCyan" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8"/>
+    </marker>
+    <marker id="arrowAmber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#fbbf24"/>
+    </marker>
+  </defs>
+
+  <!-- Title Banner -->
+  <rect x="50" y="30" width="1200" height="90" rx="16" fill="#18181b" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="650" y="70" text-anchor="middle" fill="url(#headerGrad)" font-size="25" font-weight="800" letter-spacing="0.5">CODE-LEVEL DEPENDENCY TO RUNTIME EXECUTION PIPELINE</text>
+  <text x="650" y="98" text-anchor="middle" fill="#94a3b8" font-size="14" font-weight="500">pom.xml Starters • Spring Security 6 • Auth Services • Google OAuth/SMTP • PostgreSQL Persistence</text>
+
+  <!-- ================= LEVEL 1: POM.XML & APPLICATION PROPERTIES ================= -->
+  <rect x="60" y="150" width="1180" height="230" rx="18" fill="#0f0f13" stroke="rgba(245,158,11,0.35)" stroke-width="2" stroke-dasharray="6,6"/>
+  <text x="90" y="185" fill="#fbbf24" font-size="15" font-weight="700" letter-spacing="1">LAYER 1: MAVEN DEPENDENCIES (pom.xml) &amp; CONFIGURATION (application.yaml)</text>
+
+  <g transform="translate(90, 205)">
+    <!-- pom.xml box -->
+    <rect width="530" height="150" rx="12" fill="url(#boxGrad)" stroke="#f59e0b" stroke-width="1.6" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="6" height="150" rx="3" fill="#f59e0b"/>
+    <text x="25" y="28" fill="#f8fafc" font-size="14" font-weight="700">📦 pom.xml Starters &amp; Libraries</text>
+    <text x="25" y="55" fill="#cbd5e1" font-size="12">• <tspan fill="#fde68a" font-family="monospace">spring-boot-starter-oauth2-client</tspan> (Google OAuth2)</text>
+    <text x="25" y="78" fill="#cbd5e1" font-size="12">• <tspan fill="#fde68a" font-family="monospace">spring-boot-starter-mail</tspan> (JavaMailSender for Gmail)</text>
+    <text x="25" y="101" fill="#cbd5e1" font-size="12">• <tspan fill="#fde68a" font-family="monospace">jjwt-api / jjwt-impl / jjwt-jackson</tspan> (v0.12.6 JWT Tokens)</text>
+    <text x="25" y="124" fill="#cbd5e1" font-size="12">• <tspan fill="#fde68a" font-family="monospace">spring-boot-starter-security</tspan> (BCrypt &amp; Filter Chains)</text>
+
+    <!-- application-local.yaml box -->
+    <g transform="translate(560, 0)">
+      <rect width="530" height="150" rx="12" fill="url(#boxGrad)" stroke="#f59e0b" stroke-width="1.6" filter="url(#shadow)"/>
+      <rect x="0" y="0" width="6" height="150" rx="3" fill="#f59e0b"/>
+      <text x="25" y="28" fill="#f8fafc" font-size="14" font-weight="700">⚙️ application-local.yaml Injected Keys</text>
+      <text x="25" y="55" fill="#cbd5e1" font-size="12">• <tspan fill="#a5b4fc" font-family="monospace">spring.security.oauth2.client.registration.google</tspan></text>
+      <text x="35" y="75" fill="#94a3b8" font-size="11">clientId, clientSecret, scope: openid, profile, email</text>
+      <text x="25" y="98" fill="#cbd5e1" font-size="12">• <tspan fill="#34d399" font-family="monospace">spring.mail.host=smtp.gmail.com</tspan>, port: 587, auth: true</text>
+      <text x="35" y="118" fill="#94a3b8" font-size="11">username: your@gmail.com, password: [Google App Password]</text>
+    </g>
+  </g>
+
+  <!-- Line from Layer 1 to Layer 2 -->
+  <line x1="650" y1="380" x2="650" y2="420" stroke="#818cf8" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- ================= LEVEL 2: SECURITY CONFIG & FILTER CHAIN ================= -->
+  <rect x="60" y="425" width="1180" height="340" rx="18" fill="#0f0f13" stroke="rgba(99,102,241,0.35)" stroke-width="2" stroke-dasharray="6,6"/>
+  <text x="90" y="460" fill="#818cf8" font-size="15" font-weight="700" letter-spacing="1">LAYER 2: SPRING SECURITY CONFIGURATION &amp; FILTER PIPELINE</text>
+
+  <!-- SecurityConfig.java -->
+  <g transform="translate(90, 480)">
+    <rect width="1120" height="120" rx="12" fill="url(#boxGrad)" stroke="#6366f1" stroke-width="1.8" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="8" height="120" rx="4" fill="#6366f1"/>
+    <text x="30" y="30" fill="#f8fafc" font-size="16" font-weight="700">SecurityConfig.java (Core Security Architecture)</text>
+    <rect x="520" y="12" width="260" height="22" rx="6" fill="rgba(99,102,241,0.2)" stroke="#818cf8"/>
+    <text x="650" y="27" text-anchor="middle" fill="#a5b4fc" font-size="11" font-weight="700">@Configuration @EnableWebSecurity</text>
+    <text x="30" y="58" fill="#cbd5e1" font-size="13">• <tspan fill="#818cf8" font-weight="700">Public Endpoints:</tspan> <tspan fill="#a5b4fc" font-family="monospace">/api/auth/**</tspan> (Login, Forgot-Password, Verify-OTP, Reset-Password)</text>
+    <text x="30" y="80" fill="#cbd5e1" font-size="13">• <tspan fill="#818cf8" font-weight="700">OAuth2 Login Config:</tspan> <tspan fill="#a5b4fc" font-family="monospace">.authorizationEndpoint().authorizationRequestResolver(...prompt=select_account...)</tspan></text>
+    <text x="30" y="102" fill="#cbd5e1" font-size="13">• <tspan fill="#818cf8" font-weight="700">Handlers Attached:</tspan> <tspan fill="#34d399" font-family="monospace">.userInfoEndpoint(customOAuth2UserService).successHandler(oauth2SuccessHandler)</tspan></text>
+  </g>
+
+  <!-- Filters Row -->
+  <g transform="translate(90, 620)">
+    <rect width="540" height="120" rx="12" fill="url(#boxGrad)" stroke="#818cf8" stroke-width="1.4"/>
+    <text x="20" y="28" fill="#f8fafc" font-size="14" font-weight="700">CorrelationIdFilter.java</text>
+    <text x="20" y="52" fill="#cbd5e1" font-size="12">• Inspects / generates header <tspan fill="#a5b4fc" font-family="monospace">X-Request-ID</tspan></text>
+    <text x="20" y="74" fill="#cbd5e1" font-size="12">• Binds trace ID to <tspan fill="#34d399" font-family="monospace">MDC.put("requestId", ...)</tspan></text>
+    <text x="20" y="96" fill="#94a3b8" font-size="11">Enables distributed observability across all logs</text>
+
+    <g transform="translate(580, 0)">
+      <rect width="540" height="120" rx="12" fill="url(#boxGrad)" stroke="#818cf8" stroke-width="1.4"/>
+      <text x="20" y="28" fill="#f8fafc" font-size="14" font-weight="700">JwtAuthenticationFilter.java</text>
+      <text x="20" y="52" fill="#cbd5e1" font-size="12">• Extracts &amp; validates <tspan fill="#a5b4fc" font-family="monospace">Authorization: Bearer &lt;JWT&gt;</tspan></text>
+      <text x="20" y="74" fill="#cbd5e1" font-size="12">• Checks <tspan fill="#fbbf24" font-family="monospace">issuedAt &gt; user.passwordChangedAt</tspan></text>
+      <text x="20" y="96" fill="#94a3b8" font-size="11">Builds SecurityContextHolder UsernamePasswordAuthenticationToken</text>
+    </g>
+  </g>
+
+  <!-- Line from Layer 2 to Layer 3 -->
+  <line x1="650" y1="765" x2="650" y2="805" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arrowCyan)"/>
+
+  <!-- ================= LEVEL 3: DUAL EXECUTION BRANCHES ================= -->
+  <rect x="60" y="810" width="1180" height="660" rx="18" fill="#0f0f13" stroke="rgba(56,189,248,0.35)" stroke-width="2" stroke-dasharray="6,6"/>
+  <text x="90" y="845" fill="#38bdf8" font-size="15" font-weight="700" letter-spacing="1">LAYER 3: APPLICATION CONTROLLERS &amp; SERVICE ORCHESTRATION</text>
+
+  <!-- BRANCH A: FORGOT PASSWORD & OTP SERVICE -->
+  <g transform="translate(90, 865)">
+    <rect width="540" height="580" rx="14" fill="url(#boxGrad)" stroke="#38bdf8" stroke-width="1.8" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="6" height="580" rx="3" fill="#38bdf8"/>
+    
+    <text x="25" y="32" fill="#38bdf8" font-size="16" font-weight="800">BRANCH A: FORGOT PASSWORD &amp; OTP</text>
+
+    <!-- Step 1: Controller -->
+    <rect x="25" y="55" width="490" height="110" rx="10" fill="#18181b" stroke="#38bdf8" stroke-width="1.2"/>
+    <text x="40" y="80" fill="#f8fafc" font-size="14" font-weight="700">1. AuthController.java</text>
+    <text x="40" y="105" fill="#cbd5e1" font-size="12">• <tspan fill="#38bdf8" font-family="monospace">@PostMapping("/forgot-password")</tspan></text>
+    <text x="40" y="125" fill="#cbd5e1" font-size="12">• <tspan fill="#38bdf8" font-family="monospace">@PostMapping("/verify-otp")</tspan></text>
+    <text x="40" y="145" fill="#cbd5e1" font-size="12">• <tspan fill="#38bdf8" font-family="monospace">@PostMapping("/reset-password")</tspan></text>
+
+    <!-- Step 2: AuthService -->
+    <rect x="25" y="180" width="490" height="190" rx="10" fill="#18181b" stroke="#6366f1" stroke-width="1.2"/>
+    <text x="40" y="205" fill="#f8fafc" font-size="14" font-weight="700">2. AuthService.java (Business Logic)</text>
+    <text x="40" y="230" fill="#cbd5e1" font-size="12">• <tspan fill="#818cf8" font-weight="700">forgotPassword():</tspan> Generates SecureRandom 6-digit OTP</text>
+    <text x="50" y="250" fill="#94a3b8" font-size="11">Sets reset_token_expiry = now() + 15 min</text>
+    <text x="40" y="275" fill="#cbd5e1" font-size="12">• <tspan fill="#818cf8" font-weight="700">verifyOtp():</tspan> Validates token &amp; expiry &gt; now()</text>
+    <text x="40" y="300" fill="#cbd5e1" font-size="12">• <tspan fill="#818cf8" font-weight="700">resetPassword():</tspan> Checks match &amp; calls:</text>
+    <text x="50" y="320" fill="#34d399" font-family="monospace" font-size="11">passwordEncoder.encode(newPassword)</text>
+    <text x="50" y="340" fill="#fbbf24" font-size="11">Sets passwordChangedAt=now, resets lockouts</text>
+
+    <!-- Step 3: EmailService -->
+    <rect x="25" y="385" width="490" height="160" rx="10" fill="#18181b" stroke="#10b981" stroke-width="1.2"/>
+    <text x="40" y="410" fill="#f8fafc" font-size="14" font-weight="700">3. EmailService.java (SMTP Client)</text>
+    <text x="40" y="435" fill="#cbd5e1" font-size="12">• Formats enterprise HTML template with OTP code</text>
+    <text x="40" y="458" fill="#cbd5e1" font-size="12">• <tspan fill="#34d399" font-family="monospace">JavaMailSender.send(mimeMessage)</tspan></text>
+    <text x="40" y="480" fill="#cbd5e1" font-size="12">• Connects to <tspan fill="#fbbf24" font-family="monospace">smtp.gmail.com:587</tspan> over STARTTLS</text>
+    <text x="40" y="503" fill="#94a3b8" font-size="11">• Includes console fallback logger for offline test</text>
+  </g>
+
+  <!-- BRANCH B: GOOGLE OAUTH2 SERVICE -->
+  <g transform="translate(670, 865)">
+    <rect width="540" height="580" rx="14" fill="url(#boxGrad)" stroke="#a855f7" stroke-width="1.8" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="6" height="580" rx="3" fill="#a855f7"/>
+    
+    <text x="25" y="32" fill="#c084fc" font-size="16" font-weight="800">BRANCH B: GOOGLE OAUTH 2.0 LOGIN</text>
+
+    <!-- Step 1: CustomOAuth2UserService -->
+    <rect x="25" y="55" width="490" height="160" rx="10" fill="#18181b" stroke="#a855f7" stroke-width="1.2"/>
+    <text x="40" y="80" fill="#f8fafc" font-size="14" font-weight="700">1. CustomOAuth2UserService.java</text>
+    <text x="40" y="105" fill="#cbd5e1" font-size="12">• Extends <tspan fill="#c084fc" font-family="monospace">DefaultOAuth2UserService.loadUser()</tspan></text>
+    <text x="40" y="128" fill="#cbd5e1" font-size="12">• Extracts Google claims: <tspan fill="#38bdf8" font-family="monospace">sub, email, name, picture</tspan></text>
+    <text x="40" y="150" fill="#cbd5e1" font-size="12">• Delegates to <tspan fill="#c084fc" font-family="monospace">OAuth2AuthService.processOAuth2User()</tspan></text>
+    <text x="40" y="172" fill="#94a3b8" font-size="11">Returns CustomOAuth2User principal with DB role</text>
+
+    <!-- Step 2: OAuth2AuthService -->
+    <rect x="25" y="230" width="490" height="180" rx="10" fill="#18181b" stroke="#fbbf24" stroke-width="1.2"/>
+    <text x="40" y="255" fill="#f8fafc" font-size="14" font-weight="700">2. OAuth2AuthService.java (Auto-Provisioning)</text>
+    <text x="40" y="280" fill="#cbd5e1" font-size="12">• Checks if email exists in PostgreSQL</text>
+    <text x="40" y="303" fill="#cbd5e1" font-size="12">• <tspan fill="#fbbf24" font-weight="700">New User:</tspan> Generates <tspan fill="#38bdf8" font-family="monospace">EMP046</tspan>, Role: EMPLOYEE</text>
+    <text x="50" y="323" fill="#94a3b8" font-size="11">Sets auth_provider = 'GOOGLE', provider_id = sub</text>
+    <text x="40" y="346" fill="#cbd5e1" font-size="12">• <tspan fill="#34d399" font-weight="700">Existing User:</tspan> Validates active, updates provider</text>
+    <text x="50" y="366" fill="#cbd5e1" font-size="11">Calls <tspan fill="#a5b4fc" font-family="monospace">userRepository.save(user)</tspan></text>
+
+    <!-- Step 3: OAuth2AuthenticationSuccessHandler -->
+    <rect x="25" y="425" width="490" height="120" rx="10" fill="#18181b" stroke="#10b981" stroke-width="1.2"/>
+    <text x="40" y="450" fill="#f8fafc" font-size="14" font-weight="700">3. OAuth2AuthenticationSuccessHandler.java</text>
+    <text x="40" y="475" fill="#cbd5e1" font-size="12">• Issues ASCEND JWT: <tspan fill="#34d399" font-family="monospace">jwtService.generateToken(...)</tspan></text>
+    <text x="40" y="498" fill="#cbd5e1" font-size="12">• Redirects browser to Next.js Client:</text>
+    <text x="50" y="518" fill="#38bdf8" font-family="monospace" font-size="11">http://localhost:3000/login?token=&lt;JWT&gt;&amp;user=&lt;JSON&gt;</text>
+  </g>
+
+  <!-- Line from Layer 3 to Layer 4 -->
+  <line x1="650" y1="1470" x2="650" y2="1510" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+
+  <!-- ================= LEVEL 4: POSTGRESQL & EXTERNAL SERVICES ================= -->
+  <rect x="60" y="1515" width="1180" height="280" rx="18" fill="#0f0f13" stroke="rgba(16,185,129,0.35)" stroke-width="2" stroke-dasharray="6,6"/>
+  <text x="90" y="1550" fill="#10b981" font-size="15" font-weight="700" letter-spacing="1">LAYER 4: PERSISTENCE &amp; EXTERNAL INFRASTRUCTURE</text>
+
+  <g transform="translate(90, 1570)">
+    <!-- PostgreSQL -->
+    <rect width="540" height="200" rx="12" fill="url(#boxGrad)" stroke="#10b981" stroke-width="1.6"/>
+    <text x="25" y="30" fill="#f8fafc" font-size="15" font-weight="700">🗄️ PostgreSQL (users table)</text>
+    <text x="25" y="58" fill="#cbd5e1" font-size="12">• <tspan fill="#34d399" font-family="monospace">UserRepository.findByEmailIgnoreCase(email)</tspan></text>
+    <text x="25" y="80" fill="#cbd5e1" font-size="12">• <tspan fill="#a5b4fc" font-family="monospace">reset_token VARCHAR(10)</tspan> (Holds 6-digit OTP)</text>
+    <text x="25" y="102" fill="#cbd5e1" font-size="12">• <tspan fill="#a5b4fc" font-family="monospace">reset_token_expiry TIMESTAMP</tspan> (15-min TTL)</text>
+    <text x="25" y="124" fill="#cbd5e1" font-size="12">• <tspan fill="#a5b4fc" font-family="monospace">password_hash VARCHAR(255)</tspan> (BCrypt hash)</text>
+    <text x="25" y="146" fill="#cbd5e1" font-size="12">• <tspan fill="#a5b4fc" font-family="monospace">password_changed_at TIMESTAMP</tspan> (Session revocation)</text>
+    <text x="25" y="168" fill="#94a3b8" font-size="11">Zero duplicate emails guaranteed by UNIQUE constraint</text>
+
+    <!-- External Services -->
+    <g transform="translate(580, 0)">
+      <rect width="540" height="200" rx="12" fill="url(#boxGrad)" stroke="#ea4335" stroke-width="1.6"/>
+      <text x="25" y="30" fill="#f8fafc" font-size="15" font-weight="700">🌐 External Cloud Services</text>
+      
+      <text x="25" y="60" fill="#f8fafc" font-size="13" font-weight="700">1. Google Identity Provider (OAuth 2.0)</text>
+      <text x="25" y="80" fill="#cbd5e1" font-size="12">• Validates user consent &amp; issues Authorization Code</text>
+      <text x="25" y="100" fill="#cbd5e1" font-size="12">• Endpoint: <tspan fill="#ea4335" font-family="monospace">https://accounts.google.com/o/oauth2/v2/auth</tspan></text>
+
+      <text x="25" y="130" fill="#f8fafc" font-size="13" font-weight="700">2. Google SMTP Server (Gmail Delivery)</text>
+      <text x="25" y="150" fill="#cbd5e1" font-size="12">• TLS Handshake on port <tspan fill="#34a853" font-family="monospace">smtp.gmail.com:587</tspan></text>
+      <text x="25" y="170" fill="#cbd5e1" font-size="12">• Real-time OTP inbox delivery within 1-2 seconds</text>
+    </g>
+  </g>
+
+  <!-- Line from Layer 4 to Layer 5 -->
+  <line x1="650" y1="1795" x2="650" y2="1835" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arrowCyan)"/>
+
+  <!-- ================= LEVEL 5: NEXT.JS FRONTEND OUTPUT ================= -->
+  <g transform="translate(150, 1845)">
+    <rect width="1000" height="230" rx="18" fill="url(#emeraldGrad)" stroke="#34d399" stroke-width="2" filter="url(#shadow)"/>
+    <text x="500" y="40" text-anchor="middle" fill="#ffffff" font-size="20" font-weight="800">🚀 LAYER 5: NEXT.JS 16 FRONTEND UI &amp; OUTPUT STATE</text>
+    
+    <g transform="translate(50, 65)">
+      <rect width="270" height="135" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.2)"/>
+      <text x="135" y="25" text-anchor="middle" fill="#f8fafc" font-size="13" font-weight="700">/forgot-password</text>
+      <text x="15" y="50" fill="#ecfdf5" font-size="11">• 4-Step UI Wizard</text>
+      <text x="15" y="70" fill="#ecfdf5" font-size="11">• 6-Box OTP input with timer</text>
+      <text x="15" y="90" fill="#ecfdf5" font-size="11">• Dedicated reset password</text>
+      <text x="15" y="110" fill="#ecfdf5" font-size="11">• Green success confirmation</text>
+    </g>
+
+    <g transform="translate(365, 65)">
+      <rect width="270" height="135" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.2)"/>
+      <text x="135" y="25" text-anchor="middle" fill="#f8fafc" font-size="13" font-weight="700">/login &amp; OAuth Bridge</text>
+      <text x="15" y="50" fill="#ecfdf5" font-size="11">• Intercepts URL token &amp; user</text>
+      <text x="15" y="70" fill="#ecfdf5" font-size="11">• Stores in localStorage</text>
+      <text x="15" y="90" fill="#ecfdf5" font-size="11">• Role-based redirect to</text>
+      <text x="15" y="110" fill="#ecfdf5" font-size="11">/hr, /manager, /employee</text>
+    </g>
+
+    <g transform="translate(680, 65)">
+      <rect width="270" height="135" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.2)"/>
+      <text x="135" y="25" text-anchor="middle" fill="#f8fafc" font-size="13" font-weight="700">Shell.tsx Header</text>
+      <text x="15" y="50" fill="#ecfdf5" font-size="11">• Live state initials avatar</text>
+      <text x="15" y="70" fill="#ecfdf5" font-size="11">• Dynamic name &amp; role pill</text>
+      <text x="15" y="90" fill="#ecfdf5" font-size="11">• Auto-dismiss alert banners</text>
+      <text x="15" y="110" fill="#ecfdf5" font-size="11">• Profile &amp; password modal</text>
+    </g>
+  </g>
+</svg>
