@@ -3,7 +3,7 @@
 import { FormEvent, useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { forgotPassword, verifyOtp, resetPassword } from "@/services/authService";
+import { forgotPassword, verifyResetOtp, resetPassword } from "@/services/authService";
 import { ThemeToggle } from "@/context/ThemeContext";
 import {
     KeyRound,
@@ -19,6 +19,8 @@ import {
     Check
 } from "lucide-react";
 
+const EMAIL_REGEX = /^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
+
 export default function ForgotPassword() {
     const router = useRouter();
 
@@ -27,6 +29,7 @@ export default function ForgotPassword() {
 
     const [email, setEmail] = useState("");
     const [otpDigits, setOtpDigits] = useState<string[]>(["", "", "", "", "", ""]);
+    const [resetAuthorization, setResetAuthorization] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showNewPassword, setShowNewPassword] = useState(false);
@@ -37,10 +40,11 @@ export default function ForgotPassword() {
     const [error, setError] = useState("");
     const [successMsg, setSuccessMsg] = useState("");
     const [resendCooldown, setResendCooldown] = useState(0);
+    const [otpExpiresIn, setOtpExpiresIn] = useState(600); // 10 minutes = 600s
 
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-    // Resend cooldown timer
+    // Resend cooldown timer (60s)
     useEffect(() => {
         if (resendCooldown <= 0) return;
         const timer = setInterval(() => {
@@ -48,6 +52,21 @@ export default function ForgotPassword() {
         }, 1000);
         return () => clearInterval(timer);
     }, [resendCooldown]);
+
+    // OTP Expiry countdown timer (10 mins)
+    useEffect(() => {
+        if (step !== 2 || otpExpiresIn <= 0) return;
+        const timer = setInterval(() => {
+            setOtpExpiresIn((prev) => (prev <= 1 ? 0 : prev - 1));
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [step, otpExpiresIn]);
+
+    const formatMinutes = (seconds: number) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}:${s < 10 ? "0" : ""}${s}`;
+    };
 
     // Handle 6-digit OTP Input changes
     const handleOtpChange = (index: number, value: string) => {
@@ -81,6 +100,15 @@ export default function ForgotPassword() {
     };
 
     const fullOtp = otpDigits.join("");
+    const isOtpLockedOut = error.toLowerCase().includes("locked") || error.toLowerCase().includes("lockout");
+
+    // Password Policy Regex Evaluation
+    const hasMinLength = newPassword.length >= 12;
+    const hasUppercase = /[A-Z]/.test(newPassword);
+    const hasLowercase = /[a-z]/.test(newPassword);
+    const hasNumber = /[0-9]/.test(newPassword);
+    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?/~`]/.test(newPassword);
+    const isNewPasswordValid = hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecial;
 
     // Step 1: Send OTP to Email
     const handleSendOtp = async (e: FormEvent) => {
@@ -89,22 +117,23 @@ export default function ForgotPassword() {
         setSuccessMsg("");
 
         const cleanEmail = email.trim().toLowerCase();
-        if (!cleanEmail) {
-            setError("Please enter your registered Gmail or work email address.");
+        if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
+            setError("Please enter a valid work email address (e.g. name@company.com).");
             return;
         }
 
         setLoading(true);
         try {
             const message = await forgotPassword(cleanEmail);
-            setSuccessMsg(message || "A 6-digit OTP code has been sent to your email.");
+            setSuccessMsg(message || "A verification OTP has been sent to your email.");
             setStep(2);
             setResendCooldown(60);
+            setOtpExpiresIn(600); // 10 minutes fresh validity
             setTimeout(() => {
                 inputRefs.current[0]?.focus();
             }, 100);
         } catch (err: any) {
-            setError(err.message || "Failed to send password reset OTP. Please try again.");
+            setError(err.message || "Failed to send verification code. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -121,13 +150,19 @@ export default function ForgotPassword() {
             return;
         }
 
+        if (otpExpiresIn <= 0) {
+            setError("This OTP has expired. Please request a new OTP.");
+            return;
+        }
+
         setLoading(true);
         try {
-            const message = await verifyOtp(email.trim().toLowerCase(), fullOtp);
-            setSuccessMsg(message || "OTP verified! Please enter your new password.");
+            const res = await verifyResetOtp(email.trim().toLowerCase(), fullOtp);
+            setResetAuthorization(res.resetAuthorization);
+            setSuccessMsg(res.message || "OTP verified successfully. You can now create a new password.");
             setStep(3);
         } catch (err: any) {
-            setError(err.message || "Invalid or expired OTP code. Please check and try again.");
+            setError(err.message || "Incorrect OTP code. Please check and try again.");
         } finally {
             setLoading(false);
         }
@@ -142,12 +177,13 @@ export default function ForgotPassword() {
 
         try {
             const message = await forgotPassword(email.trim().toLowerCase());
-            setSuccessMsg(message || "A new 6-digit verification code has been dispatched.");
+            setSuccessMsg(message || "A new OTP has been sent to your email.");
             setResendCooldown(60);
+            setOtpExpiresIn(600); // Fresh 10 minutes on successful resend
             setOtpDigits(["", "", "", "", "", ""]);
             inputRefs.current[0]?.focus();
         } catch (err: any) {
-            setError(err.message || "Failed to resend OTP. Please try again later.");
+            setError(err.message || "Please wait before requesting another OTP.");
         } finally {
             setResending(false);
         }
@@ -159,28 +195,52 @@ export default function ForgotPassword() {
         setError("");
         setSuccessMsg("");
 
-        if (newPassword.length < 6) {
-            setError("New password must be at least 6 characters long.");
+        if (!hasMinLength) {
+            setError("New password must be at least 12 characters long.");
+            return;
+        }
+
+        if (!hasUppercase) {
+            setError("Password must contain at least one uppercase letter (A-Z).");
+            return;
+        }
+
+        if (!hasLowercase) {
+            setError("Password must contain at least one lowercase letter (a-z).");
+            return;
+        }
+
+        if (!hasNumber) {
+            setError("Password must contain at least one number (0-9).");
+            return;
+        }
+
+        if (!hasSpecial) {
+            setError("Password must contain at least one special character (e.g. !@#$%^&*).");
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            setError("New password and confirm password do not match.");
+            setError("Passwords do not match.");
             return;
         }
 
         setLoading(true);
         try {
             await resetPassword({
+                resetAuthorization,
                 email: email.trim().toLowerCase(),
                 otp: fullOtp,
                 newPassword,
                 confirmPassword
             });
-            setSuccessMsg("Password updated successfully!");
+            setSuccessMsg("Password reset successfully. Please log in again.");
             setStep(4);
+            setTimeout(() => {
+                router.push("/login");
+            }, 2500);
         } catch (err: any) {
-            setError(err.message || "Failed to reset password. The OTP may have expired.");
+            setError(err.message || "Failed to reset password. Please check policy requirements and try again.");
         } finally {
             setLoading(false);
         }
@@ -451,7 +511,9 @@ export default function ForgotPassword() {
                         <div className="form-group">
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                                 <label className="form-label" style={{ margin: 0 }}>6-Digit Verification Code *</label>
-                                <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontWeight: "600" }}>Valid for 15 mins</span>
+                                <span style={{ fontSize: "0.75rem", color: otpExpiresIn <= 60 ? "#ef4444" : "var(--text-muted)", fontWeight: "700" }}>
+                                    {otpExpiresIn > 0 ? `⏱️ Valid for ${formatMinutes(otpExpiresIn)}` : "⚠️ OTP Expired"}
+                                </span>
                             </div>
 
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "8px" }}>
@@ -462,6 +524,7 @@ export default function ForgotPassword() {
                                         type="text"
                                         inputMode="numeric"
                                         maxLength={6}
+                                        disabled={loading || isOtpLockedOut}
                                         value={digit}
                                         onChange={(e) => handleOtpChange(index, e.target.value)}
                                         onKeyDown={(e) => handleOtpKeyDown(index, e)}
@@ -473,7 +536,8 @@ export default function ForgotPassword() {
                                             padding: "10px 0",
                                             borderRadius: "10px",
                                             borderColor: digit ? "var(--primary)" : "var(--border)",
-                                            background: digit ? "rgba(99, 102, 241, 0.05)" : "var(--bg-surface)"
+                                            background: digit ? "rgba(99, 102, 241, 0.05)" : "var(--bg-surface)",
+                                            opacity: isOtpLockedOut ? 0.6 : 1
                                         }}
                                     />
                                 ))}
@@ -483,8 +547,17 @@ export default function ForgotPassword() {
                         <button
                             type="submit"
                             className="btn btn-primary"
-                            disabled={loading || fullOtp.length !== 6}
-                            style={{ width: "100%", padding: "12px", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", fontWeight: "700" }}
+                            disabled={loading || fullOtp.length !== 6 || otpExpiresIn <= 0 || isOtpLockedOut}
+                            style={{
+                                width: "100%",
+                                padding: "12px",
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                gap: "8px",
+                                fontWeight: "700",
+                                opacity: isOtpLockedOut ? 0.6 : 1
+                            }}
                         >
                             {loading ? (
                                 <>
@@ -504,13 +577,13 @@ export default function ForgotPassword() {
                             <button
                                 type="button"
                                 onClick={handleResendOtp}
-                                disabled={resendCooldown > 0 || resending}
+                                disabled={resendCooldown > 0 || resending || isOtpLockedOut}
                                 style={{
                                     background: "transparent",
                                     border: "none",
-                                    color: resendCooldown > 0 ? "var(--text-muted)" : "var(--primary)",
+                                    color: (resendCooldown > 0 || isOtpLockedOut) ? "var(--text-muted)" : "var(--primary)",
                                     fontWeight: "600",
-                                    cursor: resendCooldown > 0 ? "not-allowed" : "pointer",
+                                    cursor: (resendCooldown > 0 || isOtpLockedOut) ? "not-allowed" : "pointer",
                                     display: "inline-flex",
                                     alignItems: "center",
                                     gap: "5px",
@@ -547,15 +620,19 @@ export default function ForgotPassword() {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">New Password *</label>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                                <label className="form-label" style={{ margin: 0 }}>New Password *</label>
+                                <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Min 12 characters</span>
+                            </div>
                             <div style={{ position: "relative" }}>
                                 <input
                                     type={showNewPassword ? "text" : "password"}
                                     required
-                                    minLength={6}
+                                    minLength={12}
+                                    maxLength={128}
                                     className="form-input"
                                     style={{ paddingLeft: "38px", paddingRight: "38px" }}
-                                    placeholder="At least 6 characters"
+                                    placeholder="At least 12 characters"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
                                     autoFocus
@@ -577,7 +654,8 @@ export default function ForgotPassword() {
                                 <input
                                     type={showConfirmPassword ? "text" : "password"}
                                     required
-                                    minLength={6}
+                                    minLength={12}
+                                    maxLength={128}
                                     className="form-input"
                                     style={{ paddingLeft: "38px", paddingRight: "38px" }}
                                     placeholder="Re-type new password"
@@ -595,10 +673,41 @@ export default function ForgotPassword() {
                             </div>
                         </div>
 
+                        {/* Live Password Policy Checklist */}
+                        <div style={{
+                            background: "var(--bg-subtle)",
+                            padding: "12px 14px",
+                            borderRadius: "10px",
+                            border: "1px solid var(--border)",
+                            fontSize: "0.75rem",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "6px"
+                        }}>
+                            <span style={{ fontWeight: "700", color: "var(--text-muted)" }}>Password Security Rules:</span>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px" }}>
+                                <span style={{ color: hasMinLength ? "#10b981" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                    {hasMinLength ? "✓" : "○"} 12+ characters
+                                </span>
+                                <span style={{ color: hasUppercase ? "#10b981" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                    {hasUppercase ? "✓" : "○"} Uppercase (A-Z)
+                                </span>
+                                <span style={{ color: hasLowercase ? "#10b981" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                    {hasLowercase ? "✓" : "○"} Lowercase (a-z)
+                                </span>
+                                <span style={{ color: hasNumber ? "#10b981" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                    {hasNumber ? "✓" : "○"} Number (0-9)
+                                </span>
+                                <span style={{ color: hasSpecial ? "#10b981" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                    {hasSpecial ? "✓" : "○"} Special char (!@#$...)
+                                </span>
+                            </div>
+                        </div>
+
                         <button
                             type="submit"
                             className="btn btn-primary"
-                            disabled={loading || !newPassword || !confirmPassword}
+                            disabled={loading || !newPassword || !confirmPassword || !isNewPasswordValid || newPassword !== confirmPassword}
                             style={{ width: "100%", padding: "12px", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", fontWeight: "700" }}
                         >
                             {loading ? (

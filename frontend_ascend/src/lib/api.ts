@@ -63,18 +63,35 @@ export async function api<T>(
                 message = `Validation error: ${details}`;
             }
         } catch {
-            // Response was not JSON (e.g. text/html or blank 500/403)
-            if (response.status === 401) {
-                message = "Session expired or invalid credentials. Please log in.";
-            } else if (response.status === 403) {
-                message = "Access denied: You do not have permission to access this resource.";
-            } else if (response.status === 404) {
-                message = "Requested resource not found.";
-            } else if (response.status === 409) {
-                message = "A conflict occurred with an existing record.";
-            } else if (response.status >= 500) {
-                message = "Internal server error. Please try again later.";
+            // Non-JSON or empty response payload
+        }
+
+        // Standardized Safe Security Status Mapping
+        if (response.status === 401) {
+            const isAuthEndpoint = endpoint.startsWith("/auth/") || endpoint.startsWith("auth/");
+            if (typeof window !== "undefined") {
+                try {
+                    localStorage.removeItem("ascend_token");
+                    localStorage.removeItem("ascend_user");
+                    const path = window.location.pathname;
+                    if (!isAuthEndpoint && path !== "/login" && path !== "/forgot-password" && path !== "/signup") {
+                        window.location.href = "/login?expired=true";
+                    }
+                } catch {}
             }
+            if (!message || message.startsWith("Request failed")) {
+                message = "Your session has expired. Please log in again.";
+            }
+        } else if (response.status === 403) {
+            if (!message || message.startsWith("Request failed")) {
+                message = "You do not have permission to perform this action.";
+            }
+        } else if (response.status === 429) {
+            message = "Too many requests. Please wait before trying again.";
+        } else if (response.status === 404 && message.startsWith("Request failed")) {
+            message = "Requested resource not found.";
+        } else if (response.status >= 500 && message.startsWith("Request failed")) {
+            message = "An unexpected server error occurred. Please try again later.";
         }
 
         throw new Error(message);

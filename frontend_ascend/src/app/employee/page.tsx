@@ -982,69 +982,7 @@ export default function EmployeePage() {
                                     </div>
                                 </div>
 
-                                {/* SECURITY & CREDENTIALS SECTION */}
-                                <div className="card" style={{ padding: "14px 16px", background: "var(--bg-subtle)", borderRadius: "10px", border: "1px solid var(--border)" }}>
-                                    <div
-                                        onClick={() => setShowPasswordChange(!showPasswordChange)}
-                                        style={{
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            alignItems: "center",
-                                            cursor: "pointer",
-                                            userSelect: "none"
-                                        }}
-                                    >
-                                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                            <Lock size={15} style={{ color: "var(--primary)" }} />
-                                            <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--text-main)" }}>
-                                                Change Account Password / Credentials
-                                            </span>
-                                        </div>
-                                        <div style={{ color: "var(--text-muted)", display: "flex", alignItems: "center" }}>
-                                            {showPasswordChange ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                        </div>
-                                    </div>
 
-                                    {showPasswordChange && (
-                                        <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: "12px" }}>
-                                            <div className="form-group">
-                                                <label className="form-label">Current Password (if set)</label>
-                                                <input
-                                                    type="password"
-                                                    className="form-input"
-                                                    value={currentPasswordInput}
-                                                    onChange={(e) => setCurrentPasswordInput(e.target.value)}
-                                                    placeholder="Enter current password"
-                                                />
-                                            </div>
-
-                                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                                                <div className="form-group">
-                                                    <label className="form-label">New Password</label>
-                                                    <input
-                                                        type="password"
-                                                        minLength={6}
-                                                        className="form-input"
-                                                        value={newPasswordInput}
-                                                        onChange={(e) => setNewPasswordInput(e.target.value)}
-                                                        placeholder="Min 6 characters"
-                                                    />
-                                                </div>
-                                                <div className="form-group">
-                                                    <label className="form-label">Confirm New Password</label>
-                                                    <input
-                                                        type="password"
-                                                        minLength={6}
-                                                        className="form-input"
-                                                        value={confirmPasswordInput}
-                                                        onChange={(e) => setConfirmPasswordInput(e.target.value)}
-                                                        placeholder="Re-type new password"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
 
                                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
                                     <button

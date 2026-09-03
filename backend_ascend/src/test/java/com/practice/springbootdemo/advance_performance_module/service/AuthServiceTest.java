@@ -47,7 +47,25 @@ class AuthServiceTest {
     private ManagerAssignmentRepository managerAssignmentRepository;
 
     @Mock
-    private PasswordEncoder passwordEncoder;
+    private PasswordService passwordService;
+
+    @Mock
+    private PasswordPolicyService passwordPolicyService;
+
+    @Mock
+    private OtpService otpService;
+
+    @Mock
+    private ResetAuthorizationService resetAuthorizationService;
+
+    @Mock
+    private SessionService sessionService;
+
+    @Mock
+    private RateLimitService rateLimitService;
+
+    @Mock
+    private SecurityAuditService securityAuditService;
 
     @Mock
     private JwtService jwtService;
@@ -83,8 +101,8 @@ class AuthServiceTest {
         user.setDepartmentId(dynamicDept.getId());
         LoginRequest request = new LoginRequest(user.getEmail(), "Password123");
 
-        when(userRepository.findByEmailIgnoreCase(user.getEmail())).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("Password123", user.getPasswordHash())).thenReturn(true);
+        when(userRepository.findByEmailIgnoreCaseOrEmployeeCodeIgnoreCase(user.getEmail(), user.getEmail())).thenReturn(Optional.of(user));
+        when(passwordService.matches("Password123", user.getPasswordHash())).thenReturn(true);
         when(jwtService.generate(user)).thenReturn("jwt.token." + user.getId());
         when(departmentRepository.findById(dynamicDept.getId())).thenReturn(Optional.of(dynamicDept));
 
@@ -103,12 +121,12 @@ class AuthServiceTest {
     void login_InvalidPassword_ThrowsUnauthorizedException() {
 
         LoginRequest request = new LoginRequest(dynamicUser.getEmail(), "WrongPassword");
-        when(userRepository.findByEmailIgnoreCase(dynamicUser.getEmail())).thenReturn(Optional.of(dynamicUser));
-        when(passwordEncoder.matches("WrongPassword", dynamicUser.getPasswordHash())).thenReturn(false);
+        when(userRepository.findByEmailIgnoreCaseOrEmployeeCodeIgnoreCase(dynamicUser.getEmail(), dynamicUser.getEmail())).thenReturn(Optional.of(dynamicUser));
+        when(passwordService.matches("WrongPassword", dynamicUser.getPasswordHash())).thenReturn(false);
 
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(UnauthorizedException.class)
-                .hasMessageContaining("Invalid email or password");
+                .hasMessageContaining("Invalid username or password");
 
         verify(jwtService, never()).generate(any());
     }
@@ -119,7 +137,7 @@ class AuthServiceTest {
 
         dynamicUser.setActive(false);
         LoginRequest request = new LoginRequest(dynamicUser.getEmail(), "Password123");
-        when(userRepository.findByEmailIgnoreCase(dynamicUser.getEmail())).thenReturn(Optional.of(dynamicUser));
+        when(userRepository.findByEmailIgnoreCaseOrEmployeeCodeIgnoreCase(dynamicUser.getEmail(), dynamicUser.getEmail())).thenReturn(Optional.of(dynamicUser));
 
 
         assertThatThrownBy(() -> authService.login(request))
@@ -139,7 +157,7 @@ class AuthServiceTest {
         when(userRepository.existsByEmailIgnoreCase(dynamicEmail.toLowerCase())).thenReturn(false);
         when(departmentRepository.findById(deptId)).thenReturn(Optional.of(dynamicDept));
         when(userCodeGeneratorService.generateEmployeeCode()).thenReturn("EMP" + TestDataFactory.nextId());
-        when(passwordEncoder.encode("SecurePass123")).thenReturn("hashed_" + dynamicEmail);
+        when(passwordService.encode("SecurePass123")).thenReturn("hashed_" + dynamicEmail);
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User u = invocation.getArgument(0);
             u.setId(TestDataFactory.nextId());
@@ -188,28 +206,38 @@ class AuthServiceTest {
         verify(userRepository, never()).save(any());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"Kageyama12.com", "kageyama@", "@domain.com", "kageyama@domain", "plainaddress"})
+    @DisplayName("signup: should throw BadRequestException when email format is invalid")
+    void signup_InvalidEmailFormat_ThrowsBadRequestException(String invalidEmail) {
+        SignupRequest request = new SignupRequest(
+                "Dynamic Name", invalidEmail, "SecurePass123!", "SecurePass123!", dynamicDept.getId()
+        );
+
+        assertThatThrownBy(() -> authService.signup(request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Invalid email format");
+
+        verify(userRepository, never()).save(any());
+    }
+
     @Test
     @DisplayName("forgotPassword: generates 6-digit OTP and dispatches email for active user")
     void forgotPassword_ActiveUser_GeneratesOtpAndSendsEmail() {
         when(userRepository.findByEmailIgnoreCase("vamshigadila@gmail.com")).thenReturn(Optional.of(dynamicUser));
-        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(otpService.generateAndSaveOtp(eq(dynamicUser), any())).thenReturn("123456");
 
         String result = authService.forgotPassword(new com.practice.springbootdemo.advance_performance_module.dto.auth.ForgotPasswordRequest("vamshigadila@gmail.com"));
 
-        assertThat(result).contains("Password reset OTP has been sent");
-        verify(emailService, times(1)).sendPasswordResetOtp(eq(dynamicUser.getEmail()), eq(dynamicUser.getName()), anyString());
-        verify(userRepository, times(1)).save(dynamicUser);
-        assertThat(dynamicUser.getResetToken()).isNotNull();
-        assertThat(dynamicUser.getResetToken()).hasSize(6);
+        assertThat(result).contains("A verification OTP has been sent to your email.");
+        verify(emailService, times(1)).sendPasswordResetOtp(eq(dynamicUser.getEmail()), eq(dynamicUser.getName()), eq("123456"));
     }
 
     @Test
     @DisplayName("resetPassword: successfully updates password when OTP is valid and matching")
     void resetPassword_ValidOtp_UpdatesPassword() {
-        dynamicUser.setResetToken("123456");
-        dynamicUser.setResetTokenExpiry(java.time.LocalDateTime.now().plusMinutes(10));
         when(userRepository.findByEmailIgnoreCase("vamshigadila@gmail.com")).thenReturn(Optional.of(dynamicUser));
-        when(passwordEncoder.encode("NewSecret123")).thenReturn("hashed_new_secret");
+        when(passwordService.encode("NewSecret123")).thenReturn("hashed_new_secret");
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
         com.practice.springbootdemo.advance_performance_module.dto.auth.ResetPasswordRequest request =
@@ -219,47 +247,47 @@ class AuthServiceTest {
 
         String result = authService.resetPassword(request);
 
-        assertThat(result).contains("Password has been successfully updated");
+        assertThat(result).contains("Password reset successfully");
         assertThat(dynamicUser.getPasswordHash()).isEqualTo("hashed_new_secret");
-        assertThat(dynamicUser.getResetToken()).isNull();
         verify(userRepository, times(1)).save(dynamicUser);
+        verify(sessionService, times(1)).revokeAllSessions(dynamicUser.getId());
     }
 
     @Test
     @DisplayName("verifyOtp: successfully validates matching OTP")
     void verifyOtp_ValidOtp_ReturnsSuccess() {
-        dynamicUser.setResetToken("654321");
-        dynamicUser.setResetTokenExpiry(java.time.LocalDateTime.now().plusMinutes(10));
         when(userRepository.findByEmailIgnoreCase("vamshigadila@gmail.com")).thenReturn(Optional.of(dynamicUser));
+        when(resetAuthorizationService.createResetAuthorization(dynamicUser)).thenReturn("sample-reset-auth-uuid");
 
         com.practice.springbootdemo.advance_performance_module.dto.auth.VerifyOtpRequest request =
                 new com.practice.springbootdemo.advance_performance_module.dto.auth.VerifyOtpRequest("vamshigadila@gmail.com", "654321");
 
         String result = authService.verifyOtp(request);
-        assertThat(result).contains("OTP code verified successfully");
+        assertThat(result).contains("OTP verified successfully");
+        verify(otpService, times(1)).verifyOtp(eq(dynamicUser), eq(com.practice.springbootdemo.advance_performance_module.entity.VerificationPurpose.PASSWORD_RESET), eq("654321"));
     }
 
     @Test
     @DisplayName("verifyOtp: throws exception for invalid OTP")
     void verifyOtp_InvalidOtp_ThrowsException() {
-        dynamicUser.setResetToken("654321");
-        dynamicUser.setResetTokenExpiry(java.time.LocalDateTime.now().plusMinutes(10));
         when(userRepository.findByEmailIgnoreCase("vamshigadila@gmail.com")).thenReturn(Optional.of(dynamicUser));
+        doThrow(new BadRequestException("Incorrect OTP. Please try again."))
+                .when(otpService).verifyOtp(eq(dynamicUser), eq(com.practice.springbootdemo.advance_performance_module.entity.VerificationPurpose.PASSWORD_RESET), eq("111111"));
 
         com.practice.springbootdemo.advance_performance_module.dto.auth.VerifyOtpRequest request =
                 new com.practice.springbootdemo.advance_performance_module.dto.auth.VerifyOtpRequest("vamshigadila@gmail.com", "111111");
 
         assertThatThrownBy(() -> authService.verifyOtp(request))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Invalid OTP code");
+                .hasMessageContaining("Incorrect OTP");
     }
 
     @Test
     @DisplayName("resetPassword: throws exception when OTP is invalid or expired")
     void resetPassword_InvalidOtp_ThrowsException() {
-        dynamicUser.setResetToken("123456");
-        dynamicUser.setResetTokenExpiry(java.time.LocalDateTime.now().plusMinutes(10));
         when(userRepository.findByEmailIgnoreCase("vamshigadila@gmail.com")).thenReturn(Optional.of(dynamicUser));
+        doThrow(new BadRequestException("This OTP has expired."))
+                .when(otpService).verifyOtp(eq(dynamicUser), eq(com.practice.springbootdemo.advance_performance_module.entity.VerificationPurpose.PASSWORD_RESET), eq("999999"));
 
         com.practice.springbootdemo.advance_performance_module.dto.auth.ResetPasswordRequest request =
                 new com.practice.springbootdemo.advance_performance_module.dto.auth.ResetPasswordRequest(
@@ -268,6 +296,6 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.resetPassword(request))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Invalid OTP code");
+                .hasMessageContaining("This OTP has expired");
     }
 }

@@ -5,16 +5,42 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { login, resetPassword } from "@/services/authService";
 import { ThemeToggle } from "@/context/ThemeContext";
-import { KeyRound, X } from "lucide-react";
+import { KeyRound, X, Eye, EyeOff } from "lucide-react";
+
+const EMAIL_REGEX = /^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
+const EMPLOYEE_CODE_REGEX = /^[a-zA-Z0-9_-]{3,20}$/;
+
+const isEmailInput = (val: string) => val.includes("@") || val.includes(".");
+
+const isIdentifierValid = (val: string) => {
+    const trimmed = val.trim();
+    if (!trimmed) return false;
+    if (isEmailInput(trimmed)) {
+        return EMAIL_REGEX.test(trimmed);
+    }
+    return EMPLOYEE_CODE_REGEX.test(trimmed);
+};
+
+const isPasswordRegexValid = (pass: string) => {
+    return pass.length >= 12 &&
+        /[A-Z]/.test(pass) &&
+        /[a-z]/.test(pass) &&
+        /[0-9]/.test(pass) &&
+        /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?/~`]/.test(pass);
+};
 
 export default function Login() {
     const router = useRouter();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [lockoutSeconds, setLockoutSeconds] = useState(0);
+
+    const identifierValid = isIdentifierValid(email);
+    const passwordValid = isPasswordRegexValid(password);
 
     // Direct Forgot Password Modal State (Email + Username verification)
     const [showForgotModal, setShowForgotModal] = useState(false);
@@ -86,9 +112,18 @@ export default function Login() {
         if (typeof window === "undefined") return;
         const params = new URLSearchParams(window.location.search);
 
+        const expired = params.get("expired");
+        if (expired === "true") {
+            setError("Your session has expired. Please log in again.");
+            try {
+                window.history.replaceState({}, "", window.location.pathname);
+            } catch {}
+            return;
+        }
+
         const oauthError = params.get("oauth_error");
         if (oauthError) {
-            setError(`Google sign-in failed: ${oauthError}`);
+            setError("Google sign-in could not be completed. Please try again.");
             return;
         }
 
@@ -131,6 +166,33 @@ export default function Login() {
         e.preventDefault();
         if (lockoutSeconds > 0) return;
         setError("");
+
+        const cleanIdentifier = email.trim();
+        if (!cleanIdentifier) {
+            setError("Please enter your Employee ID or Work Email.");
+            return;
+        }
+
+        if (isEmailInput(cleanIdentifier) && !EMAIL_REGEX.test(cleanIdentifier)) {
+            setError("Please enter a valid work email address (e.g. name@company.com) or Employee ID.");
+            return;
+        }
+
+        if (!EMPLOYEE_CODE_REGEX.test(cleanIdentifier) && !EMAIL_REGEX.test(cleanIdentifier)) {
+            setError("Please enter a valid Employee ID (e.g. EMP001) or Work Email.");
+            return;
+        }
+
+        if (!password) {
+            setError("Please enter your password.");
+            return;
+        }
+
+        if (!isPasswordRegexValid(password)) {
+            setError("Invalid credentials. Password must meet security standards (minimum 12 characters, uppercase, lowercase, number, and special character).");
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -283,7 +345,10 @@ export default function Login() {
                                     checkUserLockout(e.target.value);
                                 }}
                                 placeholder="e.g. EMP001 or hr@ascend.local"
-                                style={{ paddingLeft: "42px" }}
+                                style={{
+                                    paddingLeft: "42px",
+                                    borderColor: email.trim().length > 0 && !identifierValid ? "#ef4444" : undefined
+                                }}
                                 required
                             />
                             <div style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }}>
@@ -293,6 +358,13 @@ export default function Login() {
                                 </svg>
                             </div>
                         </div>
+                        {email.trim().length > 0 && !identifierValid && (
+                            <span style={{ color: "#ef4444", fontSize: "0.74rem", marginTop: "4px", display: "block" }}>
+                                {isEmailInput(email)
+                                    ? "Please enter a valid work email address (e.g. name@company.com)"
+                                    : "Please enter a valid Employee ID (e.g. EMP001) or Work Email"}
+                            </span>
+                        )}
                     </div>
 
                     <div className="form-group">
@@ -312,12 +384,15 @@ export default function Login() {
                         </div>
                         <div style={{ position: "relative" }}>
                             <input
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 className="form-input"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••"
-                                style={{ paddingLeft: "42px" }}
+                                style={{
+                                    paddingLeft: "42px",
+                                    paddingRight: "38px"
+                                }}
                                 required
                             />
                             <div style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }}>
@@ -326,6 +401,24 @@ export default function Login() {
                                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                                 </svg>
                             </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                style={{
+                                    position: "absolute",
+                                    right: "12px",
+                                    top: "50%",
+                                    transform: "translateY(-50%)",
+                                    background: "none",
+                                    border: "none",
+                                    color: "var(--text-muted)",
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center"
+                                }}
+                            >
+                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
                         </div>
                     </div>
 
@@ -341,9 +434,9 @@ export default function Login() {
                             background: lockoutSeconds > 0 ? "rgba(239, 68, 68, 0.12)" : undefined,
                             borderColor: lockoutSeconds > 0 ? "rgba(239, 68, 68, 0.35)" : undefined,
                             color: lockoutSeconds > 0 ? "#ef4444" : undefined,
-                            cursor: lockoutSeconds > 0 ? "not-allowed" : "pointer"
+                            cursor: (lockoutSeconds > 0 || !identifierValid || !passwordValid) ? "not-allowed" : "pointer"
                         }}
-                        disabled={loading || lockoutSeconds > 0}
+                        disabled={loading || lockoutSeconds > 0 || !email.trim() || !password || !identifierValid || !passwordValid}
                     >
                         {lockoutSeconds > 0 ? (
                             <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>

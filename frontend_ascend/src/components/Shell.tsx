@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuthUser, getUser, logout } from "@/lib/auth";
 import { ThemeToggle } from "@/context/ThemeContext";
-import { getMyProfile, updateMyProfile, UserProfile, UpdateProfileRequest } from "@/services/authService";
+import { getMyProfile, updateMyProfile, UserProfile, UpdateProfileRequest, logoutApi } from "@/services/authService";
 
 import {
     LayoutDashboard,
@@ -24,7 +24,9 @@ import {
     Lock,
     Key,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    Eye,
+    EyeOff
 } from "lucide-react";
 
 interface ShellProps {
@@ -53,6 +55,17 @@ export default function Shell({ children }: ShellProps) {
     const [currentPasswordInput, setCurrentPasswordInput] = useState("");
     const [newPasswordInput, setNewPasswordInput] = useState("");
     const [confirmPasswordInput, setConfirmPasswordInput] = useState("");
+    const [showCurrentPass, setShowCurrentPass] = useState(false);
+    const [showNewPass, setShowNewPass] = useState(false);
+    const [showConfirmPass, setShowConfirmPass] = useState(false);
+
+    // Password Policy Regex Evaluation
+    const profileHasMinLength = newPasswordInput.length >= 12;
+    const profileHasUppercase = /[A-Z]/.test(newPasswordInput);
+    const profileHasLowercase = /[a-z]/.test(newPasswordInput);
+    const profileHasNumber = /[0-9]/.test(newPasswordInput);
+    const profileHasSpecial = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?/~`]/.test(newPasswordInput);
+    const isProfilePasswordValid = !newPasswordInput || (profileHasMinLength && profileHasUppercase && profileHasLowercase && profileHasNumber && profileHasSpecial);
 
     const [savingProfile, setSavingProfile] = useState(false);
     const [profileError, setProfileError] = useState("");
@@ -94,8 +107,28 @@ export default function Shell({ children }: ShellProps) {
         }
 
         if (showPasswordChange && newPasswordInput) {
-            if (newPasswordInput.length < 6) {
-                setProfileError("New password must be at least 6 characters long.");
+            if (!profileHasMinLength) {
+                setProfileError("New password must be at least 12 characters long.");
+                setSavingProfile(false);
+                return;
+            }
+            if (!profileHasUppercase) {
+                setProfileError("New password must contain at least one uppercase letter (A-Z).");
+                setSavingProfile(false);
+                return;
+            }
+            if (!profileHasLowercase) {
+                setProfileError("New password must contain at least one lowercase letter (a-z).");
+                setSavingProfile(false);
+                return;
+            }
+            if (!profileHasNumber) {
+                setProfileError("New password must contain at least one number (0-9).");
+                setSavingProfile(false);
+                return;
+            }
+            if (!profileHasSpecial) {
+                setProfileError("New password must contain at least one special character (!@#$%^&*...).");
                 setSavingProfile(false);
                 return;
             }
@@ -107,6 +140,7 @@ export default function Shell({ children }: ShellProps) {
         }
 
         try {
+
             const payload: UpdateProfileRequest = {
                 name: nameInput.trim(),
                 skill: skillInput.trim(),
@@ -135,7 +169,11 @@ export default function Shell({ children }: ShellProps) {
                 } catch {}
             }
 
-            setProfileSuccess("Profile details and credentials updated successfully!");
+            setProfileSuccess(
+                showPasswordChange && newPasswordInput
+                    ? "Profile updated and password changed. Other active sessions have been secured."
+                    : "Profile details updated successfully!"
+            );
             setShowPasswordChange(false);
             setCurrentPasswordInput("");
             setNewPasswordInput("");
@@ -143,7 +181,7 @@ export default function Shell({ children }: ShellProps) {
 
             setTimeout(() => {
                 setProfileModalOpen(false);
-            }, 1200);
+            }, 1500);
         } catch (err: any) {
             setProfileError(err.message || "Failed to update profile");
         } finally {
@@ -204,7 +242,10 @@ export default function Shell({ children }: ShellProps) {
             links = [];
     }
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        try {
+            await logoutApi();
+        } catch {}
         logout();
         router.push("/login");
     };
@@ -583,39 +624,102 @@ export default function Shell({ children }: ShellProps) {
                                             <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: "12px" }}>
                                                 <div className="form-group">
                                                     <label className="form-label">Current Password (if set)</label>
-                                                    <input
-                                                        type="password"
-                                                        className="form-input"
-                                                        value={currentPasswordInput}
-                                                        onChange={(e) => setCurrentPasswordInput(e.target.value)}
-                                                        placeholder="Enter current password"
-                                                    />
+                                                    <div style={{ position: "relative" }}>
+                                                        <input
+                                                            type={showCurrentPass ? "text" : "password"}
+                                                            className="form-input"
+                                                            value={currentPasswordInput}
+                                                            onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                                                            placeholder="Enter current password"
+                                                            style={{ paddingRight: "38px" }}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowCurrentPass(!showCurrentPass)}
+                                                            style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+                                                        >
+                                                            {showCurrentPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                                                        </button>
+                                                    </div>
                                                 </div>
 
                                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                                                     <div className="form-group">
                                                         <label className="form-label">New Password</label>
-                                                        <input
-                                                            type="password"
-                                                            minLength={6}
-                                                            className="form-input"
-                                                            value={newPasswordInput}
-                                                            onChange={(e) => setNewPasswordInput(e.target.value)}
-                                                            placeholder="Min 6 characters"
-                                                        />
+                                                        <div style={{ position: "relative" }}>
+                                                            <input
+                                                                type={showNewPass ? "text" : "password"}
+                                                                maxLength={128}
+                                                                className="form-input"
+                                                                value={newPasswordInput}
+                                                                onChange={(e) => setNewPasswordInput(e.target.value)}
+                                                                placeholder="Min 12 characters"
+                                                                style={{ paddingRight: "38px" }}
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setShowNewPass(!showNewPass)}
+                                                                style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+                                                            >
+                                                                {showNewPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                     <div className="form-group">
                                                         <label className="form-label">Confirm New Password</label>
-                                                        <input
-                                                            type="password"
-                                                            minLength={6}
-                                                            className="form-input"
-                                                            value={confirmPasswordInput}
-                                                            onChange={(e) => setConfirmPasswordInput(e.target.value)}
-                                                            placeholder="Re-type new password"
-                                                        />
+                                                        <div style={{ position: "relative" }}>
+                                                            <input
+                                                                type={showConfirmPass ? "text" : "password"}
+                                                                maxLength={128}
+                                                                className="form-input"
+                                                                value={confirmPasswordInput}
+                                                                onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                                                                placeholder="Re-type new password"
+                                                                style={{ paddingRight: "38px" }}
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setShowConfirmPass(!showConfirmPass)}
+                                                                style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+                                                            >
+                                                                {showConfirmPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
+
+                                                {/* Live Password Security Rules Checklist */}
+                                                {showPasswordChange && Boolean(newPasswordInput) && (
+                                                    <div style={{
+                                                        background: "var(--bg-surface)",
+                                                        padding: "10px 14px",
+                                                        borderRadius: "8px",
+                                                        border: "1px solid var(--border)",
+                                                        fontSize: "0.74rem",
+                                                        display: "flex",
+                                                        flexDirection: "column",
+                                                        gap: "4px"
+                                                    }}>
+                                                        <span style={{ fontWeight: "700", color: "var(--text-muted)" }}>Password Security Rules:</span>
+                                                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px" }}>
+                                                            <span style={{ color: profileHasMinLength ? "#10b981" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                                                {profileHasMinLength ? "✓" : "○"} 12+ characters
+                                                            </span>
+                                                            <span style={{ color: profileHasUppercase ? "#10b981" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                                                {profileHasUppercase ? "✓" : "○"} Uppercase (A-Z)
+                                                            </span>
+                                                            <span style={{ color: profileHasLowercase ? "#10b981" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                                                {profileHasLowercase ? "✓" : "○"} Lowercase (a-z)
+                                                            </span>
+                                                            <span style={{ color: profileHasNumber ? "#10b981" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                                                {profileHasNumber ? "✓" : "○"} Number (0-9)
+                                                            </span>
+                                                            <span style={{ color: profileHasSpecial ? "#10b981" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                                                {profileHasSpecial ? "✓" : "○"} Special char (!@#$...)
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -633,7 +737,7 @@ export default function Shell({ children }: ShellProps) {
                                         <button
                                             type="submit"
                                             className="btn btn-primary"
-                                            disabled={savingProfile}
+                                            disabled={savingProfile || (showPasswordChange && Boolean(newPasswordInput) && (!isProfilePasswordValid || newPasswordInput !== confirmPasswordInput))}
                                             style={{ display: "flex", alignItems: "center", gap: "6px" }}
                                         >
                                             <CheckCircle2 size={15} />

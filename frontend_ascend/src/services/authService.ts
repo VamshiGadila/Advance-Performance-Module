@@ -65,16 +65,28 @@ export async function forgotPassword(email: string): Promise<string> {
     });
 }
 
+export type VerifyResetOtpResponse = {
+    resetAuthorization: string;
+    message: string;
+};
+
 export async function verifyOtp(email: string, otp: string): Promise<string> {
-    return api<string>("/auth/verify-otp", {
+    const res = await verifyResetOtp(email, otp);
+    return res.message;
+}
+
+export async function verifyResetOtp(email: string, otp: string): Promise<VerifyResetOtpResponse> {
+    return api<VerifyResetOtpResponse>("/auth/verify-reset-otp", {
         method: "POST",
         body: JSON.stringify({ email, otp })
     });
 }
 
 export async function resetPassword(data: {
-    email: string;
-    otp: string;
+    resetAuthorization?: string;
+    email?: string;
+    username?: string;
+    otp?: string;
     newPassword: string;
     confirmPassword: string;
 }): Promise<string> {
@@ -84,9 +96,30 @@ export async function resetPassword(data: {
     });
 }
 
+export async function changePassword(data: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+}): Promise<string> {
+    return api<string>("/auth/change-password", {
+        method: "POST",
+        body: JSON.stringify(data)
+    });
+}
+
 export async function logoutApi(): Promise<void> {
     try {
         await api<string>("/auth/logout", {
+            method: "POST"
+        });
+    } catch {
+        // Ignore if already unauthenticated
+    }
+}
+
+export async function logoutAllApi(): Promise<void> {
+    try {
+        await api<string>("/auth/logout-all", {
             method: "POST"
         });
     } catch {

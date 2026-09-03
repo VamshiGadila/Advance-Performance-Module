@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
     title: "ASCEND - Performance Management System",
-    description: "Enterprise Role-Based Performance & Goal Management Suite"
+    description: "Performance & Goal Management Suite"
 };
 
 export default function RootLayout({

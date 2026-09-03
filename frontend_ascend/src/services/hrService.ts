@@ -28,6 +28,9 @@ export interface Employee {
     domain?: string | null;
     experienceYears?: number | null;
     active?: boolean;
+    status?: "PENDING_VERIFICATION" | "ACTIVE" | "LOCKED" | "DISABLED";
+    deactivatedUntil?: string | null;
+    deactivationReason?: string | null;
 }
 
 export interface ManagerHierarchyNode {
@@ -243,3 +246,22 @@ export const transferEmployeeDepartment = (employeeId: number, departmentId: num
     });
 
 export const getManagerHierarchy = () => api<ManagerHierarchyNode[]>("/hr/employees/hierarchy");
+
+export const deactivateEmployee = (
+    employeeId: number,
+    data: { durationValue: number; durationUnit: "HOURS" | "DAYS"; reason?: string }
+) =>
+    api<Employee>(`/hr/employees/${employeeId}/deactivate`, {
+        method: "POST",
+        body: JSON.stringify(data)
+    });
+
+export const reactivateEmployee = (employeeId: number) =>
+    api<Employee>(`/hr/employees/${employeeId}/reactivate`, {
+        method: "POST"
+    });
+
+export const removeEmployee = (employeeId: number) =>
+    api<void>(`/hr/employees/${employeeId}`, {
+        method: "DELETE"
+    });

@@ -29,4 +29,6 @@ public interface GoalRepository extends JpaRepository<Goal, Long>, JpaSpecificat
     BigDecimal totalWeightExcluding(@Param("employeeId") Long employeeId, @Param("cycleId") Long cycleId, @Param("excludeGoalId") Long excludeGoalId);
     @Query("SELECT COALESCE(SUM(g.weight), 0) FROM Goal g WHERE g.employeeId = :employeeId AND g.cycleId = :cycleId")
     BigDecimal totalWeight(@Param("employeeId") Long employeeId, @Param("cycleId") Long cycleId);
+    void deleteByEmployeeId(Long employeeId);
+    void deleteByManagerId(Long managerId);
 }

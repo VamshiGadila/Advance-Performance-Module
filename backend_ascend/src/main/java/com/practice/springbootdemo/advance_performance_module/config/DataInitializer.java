@@ -39,6 +39,9 @@ public class DataInitializer {
                 jdbcTemplate.execute("CREATE SEQUENCE IF NOT EXISTS hr_code_seq START WITH 100 INCREMENT BY 1");
                 jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0");
                 jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS lockout_until TIMESTAMP");
+                jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS otp_lockout_until TIMESTAMP");
+                jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS deactivated_until TIMESTAMP");
+                jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS deactivation_reason VARCHAR(255)");
                 jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
                 jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(100)");
                 jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expiry TIMESTAMP");

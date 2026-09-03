@@ -20,4 +20,6 @@ public interface ManagerAssignmentRepository extends JpaRepository<ManagerAssign
     @Query("SELECT ma.employeeId FROM ManagerAssignment ma WHERE ma.managerId = :managerId AND ma.active = true")
     List<Long> findAssignedEmployeeIds(@Param("managerId") Long managerId);
     Optional<ManagerAssignment> findByEmployeeIdAndPerformanceCycleIdAndActiveTrue(Long employeeId, Long cycleId);
+    void deleteByEmployeeId(Long employeeId);
+    void deleteByManagerId(Long managerId);
 }

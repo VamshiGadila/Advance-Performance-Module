@@ -17,4 +17,6 @@ public interface GoalModificationRequestRepository extends JpaRepository<GoalMod
     List<GoalModificationRequest> findByManagerIdAndStatus(Long managerId, ModificationStatus status);
     Optional<GoalModificationRequest> findFirstByGoalIdAndStatusOrderByRequestedAtDesc(Long goalId, ModificationStatus status);
     boolean existsByGoalIdAndStatus(Long goalId, ModificationStatus status);
+    void deleteByEmployeeId(Long employeeId);
+    void deleteByManagerId(Long managerId);
 }

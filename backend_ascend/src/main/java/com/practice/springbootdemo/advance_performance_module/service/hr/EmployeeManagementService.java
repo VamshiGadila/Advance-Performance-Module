@@ -1,17 +1,19 @@
 package com.practice.springbootdemo.advance_performance_module.service.hr;
 
 import com.practice.springbootdemo.advance_performance_module.dto.hr.CreateManagerRequest;
+import com.practice.springbootdemo.advance_performance_module.dto.hr.DeactivateEmployeeRequest;
 import com.practice.springbootdemo.advance_performance_module.dto.hr.EmployeeResponse;
 import com.practice.springbootdemo.advance_performance_module.dto.hr.ManagerHierarchyResponse;
 import com.practice.springbootdemo.advance_performance_module.entity.Department;
 import com.practice.springbootdemo.advance_performance_module.entity.ManagerAssignment;
 import com.practice.springbootdemo.advance_performance_module.entity.Role;
 import com.practice.springbootdemo.advance_performance_module.entity.User;
+import com.practice.springbootdemo.advance_performance_module.entity.UserStatus;
 import com.practice.springbootdemo.advance_performance_module.exception.BadRequestException;
 import com.practice.springbootdemo.advance_performance_module.exception.ResourceNotFoundException;
-import com.practice.springbootdemo.advance_performance_module.repository.DepartmentRepository;
-import com.practice.springbootdemo.advance_performance_module.repository.ManagerAssignmentRepository;
-import com.practice.springbootdemo.advance_performance_module.repository.UserRepository;
+import com.practice.springbootdemo.advance_performance_module.repository.*;
+import com.practice.springbootdemo.advance_performance_module.service.SecurityAuditService;
+import com.practice.springbootdemo.advance_performance_module.service.SessionService;
 import com.practice.springbootdemo.advance_performance_module.service.UserCodeGeneratorService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,15 @@ public class EmployeeManagementService {
     private final PasswordEncoder passwordEncoder;
     private final UserCodeGeneratorService userCodeGeneratorService;
     private final DepartmentService departmentService;
+    private final GoalRepository goalRepository;
+    private final GoalModificationRequestRepository goalModificationRequestRepository;
+    private final UserSessionRepository userSessionRepository;
+    private final VerificationCodeRepository verificationCodeRepository;
+    private final PasswordHistoryRepository passwordHistoryRepository;
+    private final ResetAuthorizationRepository resetAuthorizationRepository;
+    private final SecurityAuditLogRepository securityAuditLogRepository;
+    private final SecurityAuditService securityAuditService;
+    private final SessionService sessionService;
 
     public EmployeeManagementService(
             UserRepository users,
@@ -41,7 +52,16 @@ public class EmployeeManagementService {
             ManagerAssignmentRepository managerAssignmentRepository,
             PasswordEncoder passwordEncoder,
             UserCodeGeneratorService userCodeGeneratorService,
-            DepartmentService departmentService
+            DepartmentService departmentService,
+            GoalRepository goalRepository,
+            GoalModificationRequestRepository goalModificationRequestRepository,
+            UserSessionRepository userSessionRepository,
+            VerificationCodeRepository verificationCodeRepository,
+            PasswordHistoryRepository passwordHistoryRepository,
+            ResetAuthorizationRepository resetAuthorizationRepository,
+            SecurityAuditLogRepository securityAuditLogRepository,
+            SecurityAuditService securityAuditService,
+            SessionService sessionService
     ) {
         this.users = users;
         this.departmentRepository = departmentRepository;
@@ -49,6 +69,15 @@ public class EmployeeManagementService {
         this.passwordEncoder = passwordEncoder;
         this.userCodeGeneratorService = userCodeGeneratorService;
         this.departmentService = departmentService;
+        this.goalRepository = goalRepository;
+        this.goalModificationRequestRepository = goalModificationRequestRepository;
+        this.userSessionRepository = userSessionRepository;
+        this.verificationCodeRepository = verificationCodeRepository;
+        this.passwordHistoryRepository = passwordHistoryRepository;
+        this.resetAuthorizationRepository = resetAuthorizationRepository;
+        this.securityAuditLogRepository = securityAuditLogRepository;
+        this.securityAuditService = securityAuditService;
+        this.sessionService = sessionService;
     }
 
     @Transactional
@@ -282,7 +311,10 @@ public class EmployeeManagementService {
                 user.getLocation(),
                 user.getDomain(),
                 user.getExperienceYears(),
-                user.isActive()
+                user.isActive(),
+                user.getStatus(),
+                user.getDeactivatedUntil(),
+                user.getDeactivationReason()
         );
     }
 
@@ -385,5 +417,135 @@ public class EmployeeManagementService {
         User saved = users.save(user);
         log.info("Profile successfully updated for User ID {} ('{}')", saved.getId(), saved.getName());
         return getUserProfile(saved.getId());
+    }
+
+    @Transactional
+    public EmployeeResponse deactivateEmployee(Long employeeId, DeactivateEmployeeRequest request, Long hrUserId) {
+        User user = users.findById(employeeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with ID: " + employeeId));
+
+        if (user.getRole() == Role.HR) {
+            throw new BadRequestException("HR Administrator accounts cannot be deactivated");
+        }
+        if (user.getId().equals(hrUserId)) {
+            throw new BadRequestException("You cannot deactivate your own HR account");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime deactivatedUntil;
+        if ("HOURS".equalsIgnoreCase(request.durationUnit())) {
+            deactivatedUntil = now.plusHours(request.durationValue());
+        } else if ("DAYS".equalsIgnoreCase(request.durationUnit())) {
+            deactivatedUntil = now.plusDays(request.durationValue());
+        } else {
+            throw new BadRequestException("Invalid duration unit. Must be HOURS or DAYS");
+        }
+
+        user.setStatus(UserStatus.DISABLED);
+        user.setActive(false);
+        user.setDeactivatedUntil(deactivatedUntil);
+        user.setDeactivationReason(request.reason() != null && !request.reason().isBlank()
+                ? request.reason().trim()
+                : "Temporarily suspended by HR");
+
+        User saved = users.save(user);
+
+        // Immediately revoke and evict all active sessions across devices
+        sessionService.revokeAllSessions(employeeId);
+
+        securityAuditService.recordEvent(
+                hrUserId,
+                user.getEmail(),
+                "EMPLOYEE_DEACTIVATED_BY_HR",
+                null,
+                "Suspended until " + deactivatedUntil + ". Reason: " + user.getDeactivationReason()
+        );
+        log.warn("HR User ID {} deactivated employee ID {} ('{}') until {}", hrUserId, employeeId, user.getEmail(), deactivatedUntil);
+
+        return mapToResponse(saved);
+    }
+
+    @Transactional
+    public EmployeeResponse reactivateEmployee(Long employeeId, Long hrUserId) {
+        User user = users.findById(employeeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with ID: " + employeeId));
+
+        user.setStatus(UserStatus.ACTIVE);
+        user.setActive(true);
+        user.setDeactivatedUntil(null);
+        user.setDeactivationReason(null);
+        user.setFailedLoginAttempts(0);
+        user.setLockoutUntil(null);
+
+        User saved = users.save(user);
+
+        securityAuditService.recordEvent(
+                hrUserId,
+                user.getEmail(),
+                "EMPLOYEE_REACTIVATED_BY_HR",
+                null,
+                "Account reactivated by HR ID " + hrUserId
+        );
+        log.info("HR User ID {} reactivated employee ID {} ('{}')", hrUserId, employeeId, user.getEmail());
+
+        return mapToResponse(saved);
+    }
+
+    @Transactional
+    public void deleteEmployee(Long employeeId, Long hrUserId) {
+        User user = users.findById(employeeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with ID: " + employeeId));
+
+        if (user.getRole() == Role.HR) {
+            throw new BadRequestException("HR Administrator accounts cannot be deleted");
+        }
+        if (user.getId().equals(hrUserId)) {
+            throw new BadRequestException("You cannot delete your own HR account");
+        }
+
+        // If user is a MANAGER, check if active employees currently report to them
+        if (user.getRole() == Role.MANAGER) {
+            List<Long> assignedEmployees = managerAssignmentRepository.findAssignedEmployeeIds(employeeId);
+            if (!assignedEmployees.isEmpty()) {
+                throw new BadRequestException("Cannot delete manager while they have " + assignedEmployees.size() +
+                        " active assigned employees. Please reassign those employees to another manager first.");
+            }
+        }
+
+        String email = user.getEmail();
+        log.warn("HR User ID {} initiating permanent deletion of employee ID {} ('{}')", hrUserId, employeeId, email);
+
+        // 1. Invalidate and revoke all active sessions immediately
+        sessionService.revokeAllSessions(employeeId);
+
+        // 2. Cascade delete dependent auth and session records
+        userSessionRepository.deleteByUserId(employeeId);
+        verificationCodeRepository.deleteByUserId(employeeId);
+        passwordHistoryRepository.deleteByUserId(employeeId);
+        resetAuthorizationRepository.deleteByUserId(employeeId);
+
+        // 3. Cascade delete assignments & goals
+        managerAssignmentRepository.deleteByEmployeeId(employeeId);
+        managerAssignmentRepository.deleteByManagerId(employeeId);
+        goalModificationRequestRepository.deleteByEmployeeId(employeeId);
+        goalModificationRequestRepository.deleteByManagerId(employeeId);
+        goalRepository.deleteByEmployeeId(employeeId);
+        goalRepository.deleteByManagerId(employeeId);
+
+        // 4. Detach from historical audit logs (preserve audit trail with null user_id)
+        securityAuditLogRepository.detachUser(employeeId);
+
+        // 5. Delete user from database
+        users.delete(user);
+
+        // 6. Record audit log of deletion
+        securityAuditService.recordEvent(
+                hrUserId,
+                email,
+                "EMPLOYEE_DELETED_BY_HR",
+                null,
+                "Employee account permanently removed from DB by HR ID " + hrUserId
+        );
+        log.info("Employee ID {} ('{}') successfully purged from database by HR", employeeId, email);
     }
 }

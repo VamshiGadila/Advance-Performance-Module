@@ -143,6 +143,14 @@ public class GlobalExceptionHandler {
                         ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown"), "PARAMETER_TYPE_MISMATCH"));
     }
 
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyRequests(TooManyRequestsException ex) {
+        log.warn("Rate limit exceeded: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
+                .body(ErrorResponse.of(ex.getMessage(), "TOO_MANY_REQUESTS"));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         log.error("Unhandled server error", ex);

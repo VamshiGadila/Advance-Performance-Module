@@ -77,12 +77,26 @@ public class User {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 30)
+    @Builder.Default
+    private UserStatus status = UserStatus.ACTIVE;
+
     @Builder.Default
     @Column(name = "failed_login_attempts")
     private Integer failedLoginAttempts = 0;
 
     @Column(name = "lockout_until")
     private LocalDateTime lockoutUntil;
+
+    @Column(name = "otp_lockout_until")
+    private LocalDateTime otpLockoutUntil;
+
+    @Column(name = "deactivated_until")
+    private LocalDateTime deactivatedUntil;
+
+    @Column(name = "deactivation_reason", length = 255)
+    private String deactivationReason;
 
     @Column(name = "password_changed_at")
     private LocalDateTime passwordChangedAt;
@@ -115,6 +129,10 @@ public class User {
 
     public boolean isAccountLocked() {
         return lockoutUntil != null && lockoutUntil.isAfter(LocalDateTime.now());
+    }
+
+    public boolean isOtpLocked() {
+        return otpLockoutUntil != null && otpLockoutUntil.isAfter(LocalDateTime.now());
     }
 
     public boolean isPasswordExpired() {

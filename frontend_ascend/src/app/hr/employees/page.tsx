@@ -9,6 +9,9 @@ import {
     changeEmployeeManager,
     transferEmployeeDepartment,
     getManagerHierarchy,
+    deactivateEmployee,
+    reactivateEmployee,
+    removeEmployee,
     Employee,
     ManagerHierarchyNode
 } from "@/services/hrService";
@@ -27,7 +30,11 @@ import {
     Building2,
     X,
     ArrowRight,
-    CheckCircle2
+    CheckCircle2,
+    PauseCircle,
+    Play,
+    Trash2,
+    Clock
 } from "lucide-react";
 
 export default function EmployeesPage() {
@@ -72,6 +79,20 @@ export default function EmployeesPage() {
     const [transferringEmp, setTransferringEmp] = useState<Employee | null>(null);
     const [selectedDeptId, setSelectedDeptId] = useState("");
     const [submittingDeptTransfer, setSubmittingDeptTransfer] = useState(false);
+
+    // Deactivation Workflow State
+    const [deactivatingEmp, setDeactivatingEmp] = useState<Employee | null>(null);
+    const [deactDurationVal, setDeactDurationVal] = useState(24);
+    const [deactDurationUnit, setDeactDurationUnit] = useState<"HOURS" | "DAYS">("HOURS");
+    const [deactReason, setDeactReason] = useState("");
+    const [submittingDeactivation, setSubmittingDeactivation] = useState(false);
+
+    // Reactivation State
+    const [reactivatingEmpId, setReactivatingEmpId] = useState<number | null>(null);
+
+    // Removal Workflow State
+    const [removingEmp, setRemovingEmp] = useState<Employee | null>(null);
+    const [submittingRemoval, setSubmittingRemoval] = useState(false);
 
     useEffect(() => {
         getPublicDepartments()
@@ -189,6 +210,62 @@ export default function EmployeesPage() {
             setError(err.message || "Failed to transfer department");
         } finally {
             setSubmittingDeptTransfer(false);
+        }
+    };
+
+    // Deactivate Employee
+    const handleConfirmDeactivation = async () => {
+        if (!deactivatingEmp) return;
+        setSubmittingDeactivation(true);
+        setError("");
+        setSuccess("");
+        try {
+            await deactivateEmployee(deactivatingEmp.id, {
+                durationValue: Number(deactDurationVal),
+                durationUnit: deactDurationUnit,
+                reason: deactReason.trim() || undefined
+            });
+            setSuccess(`Employee ${deactivatingEmp.name} has been temporarily deactivated for ${deactDurationVal} ${deactDurationUnit.toLowerCase()}. Active sessions have been revoked.`);
+            setDeactivatingEmp(null);
+            fetchDirectory();
+        } catch (err: any) {
+            setError(err.message || "Failed to deactivate employee");
+        } finally {
+            setSubmittingDeactivation(false);
+        }
+    };
+
+    // Reactivate Employee
+    const handleReactivate = async (empId: number) => {
+        setReactivatingEmpId(empId);
+        setError("");
+        setSuccess("");
+        try {
+            const updated = await reactivateEmployee(empId);
+            setSuccess(`Employee ${updated.name} has been reactivated successfully. Login access is restored.`);
+            fetchDirectory();
+        } catch (err: any) {
+            setError(err.message || "Failed to reactivate employee");
+        } finally {
+            setReactivatingEmpId(null);
+        }
+    };
+
+    // Remove Employee Permanently
+    const handleConfirmRemoval = async () => {
+        if (!removingEmp) return;
+        setSubmittingRemoval(true);
+        setError("");
+        setSuccess("");
+        try {
+            await removeEmployee(removingEmp.id);
+            setSuccess(`Employee ${removingEmp.name} (${removingEmp.email}) has been permanently removed from the system. Their email is now released for new registration.`);
+            setRemovingEmp(null);
+            fetchDirectory();
+        } catch (err: any) {
+            setError(err.message || "Failed to remove employee");
+        } finally {
+            setSubmittingRemoval(false);
         }
     };
 
@@ -491,7 +568,25 @@ export default function EmployeesPage() {
 
                                                 {/* STATUS */}
                                                 <td>
-                                                    <span className="pill pill-active">Active</span>
+                                                    {emp.status === "DISABLED" || (emp.deactivatedUntil && new Date(emp.deactivatedUntil) > new Date()) ? (
+                                                        <span
+                                                            className="pill"
+                                                            style={{
+                                                                background: "rgba(239, 68, 68, 0.12)",
+                                                                color: "#f87171",
+                                                                border: "1px solid rgba(239, 68, 68, 0.3)",
+                                                                display: "inline-flex",
+                                                                alignItems: "center",
+                                                                gap: "4px"
+                                                            }}
+                                                            title={emp.deactivatedUntil ? `Suspended until ${new Date(emp.deactivatedUntil).toLocaleString()}${emp.deactivationReason ? ` (${emp.deactivationReason})` : ''}` : "Suspended"}
+                                                        >
+                                                            <PauseCircle size={11} />
+                                                            <span>Suspended</span>
+                                                        </span>
+                                                    ) : (
+                                                        <span className="pill pill-active">Active</span>
+                                                    )}
                                                 </td>
 
                                                 {/* ACTIONS */}
@@ -561,6 +656,75 @@ export default function EmployeesPage() {
                                                             <Building2 size={12} />
                                                             <span>Transfer</span>
                                                         </button>
+
+                                                        {emp.role !== "HR" && (
+                                                            <>
+                                                                {emp.status === "DISABLED" || (emp.deactivatedUntil && new Date(emp.deactivatedUntil) > new Date()) ? (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleReactivate(emp.id)}
+                                                                        disabled={reactivatingEmpId === emp.id}
+                                                                        className="btn btn-secondary btn-sm"
+                                                                        style={{
+                                                                            display: "flex",
+                                                                            alignItems: "center",
+                                                                            gap: "4px",
+                                                                            fontSize: "0.72rem",
+                                                                            padding: "3px 8px",
+                                                                            color: "#10b981",
+                                                                            borderColor: "rgba(16, 185, 129, 0.4)"
+                                                                        }}
+                                                                        title="Reactivate Account Immediately"
+                                                                    >
+                                                                        <Play size={12} />
+                                                                        <span>{reactivatingEmpId === emp.id ? "Reactivating..." : "Reactivate"}</span>
+                                                                    </button>
+                                                                ) : (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            setDeactivatingEmp(emp);
+                                                                            setDeactDurationVal(24);
+                                                                            setDeactDurationUnit("HOURS");
+                                                                            setDeactReason("");
+                                                                        }}
+                                                                        className="btn btn-secondary btn-sm"
+                                                                        style={{
+                                                                            display: "flex",
+                                                                            alignItems: "center",
+                                                                            gap: "4px",
+                                                                            fontSize: "0.72rem",
+                                                                            padding: "3px 8px",
+                                                                            color: "#f59e0b",
+                                                                            borderColor: "rgba(245, 158, 11, 0.4)"
+                                                                        }}
+                                                                        title="Temporarily Deactivate / Suspend Account"
+                                                                    >
+                                                                        <PauseCircle size={12} />
+                                                                        <span>Suspend</span>
+                                                                    </button>
+                                                                )}
+
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setRemovingEmp(emp)}
+                                                                    className="btn btn-secondary btn-sm"
+                                                                    style={{
+                                                                        display: "flex",
+                                                                        alignItems: "center",
+                                                                        gap: "4px",
+                                                                        fontSize: "0.72rem",
+                                                                        padding: "3px 8px",
+                                                                        color: "#ef4444",
+                                                                        borderColor: "rgba(239, 68, 68, 0.4)"
+                                                                    }}
+                                                                    title="Permanently remove employee from database"
+                                                                >
+                                                                    <Trash2 size={12} />
+                                                                    <span>Remove</span>
+                                                                </button>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -1080,6 +1244,180 @@ export default function EmployeesPage() {
                             >
                                 <Building2 size={15} />
                                 <span>{submittingDeptTransfer ? "Transferring..." : "Confirm Transfer"}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL 4: TEMPORARILY DEACTIVATE / SUSPEND EMPLOYEE */}
+            {deactivatingEmp && (
+                <div className="modal-backdrop">
+                    <div className="modal-card" style={{ maxWidth: "500px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "18px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                <div style={{
+                                    width: "40px",
+                                    height: "40px",
+                                    borderRadius: "12px",
+                                    background: "rgba(245, 158, 11, 0.15)",
+                                    border: "1px solid rgba(245, 158, 11, 0.3)",
+                                    display: "grid",
+                                    placeItems: "center"
+                                }}>
+                                    <PauseCircle size={20} style={{ color: "#f59e0b" }} />
+                                </div>
+                                <div>
+                                    <h2 style={{ fontSize: "1.15rem", fontWeight: "700", color: "var(--text-main)", margin: 0 }}>
+                                        Suspend Account
+                                    </h2>
+                                    <p style={{ fontSize: "0.825rem", color: "var(--text-muted)", margin: "2px 0 0" }}>
+                                        Temporarily deactivate {deactivatingEmp.name} ({deactivatingEmp.employeeCode})
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setDeactivatingEmp(null)}
+                                className="btn-close"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="alert-banner" style={{ background: "rgba(245, 158, 11, 0.08)", border: "1px solid rgba(245, 158, 11, 0.25)", color: "#f59e0b", padding: "12px", borderRadius: "8px", marginBottom: "16px", fontSize: "0.82rem" }}>
+                            <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                                <Clock size={16} style={{ flexShrink: 0, marginTop: "2px" }} />
+                                <div>
+                                    All active sessions will be terminated immediately. The employee cannot log in during this period. Access will automatically restore once the duration expires, or you can reactivate manually at any time.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+                            <div>
+                                <label className="form-label">Duration *</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={deactDurationVal}
+                                    onChange={(e) => setDeactDurationVal(Math.max(1, parseInt(e.target.value) || 1))}
+                                    className="form-input"
+                                    style={{ width: "100%" }}
+                                />
+                            </div>
+                            <div>
+                                <label className="form-label">Unit *</label>
+                                <select
+                                    value={deactDurationUnit}
+                                    onChange={(e) => setDeactDurationUnit(e.target.value as "HOURS" | "DAYS")}
+                                    className="form-input"
+                                    style={{ width: "100%" }}
+                                >
+                                    <option value="HOURS">Hours</option>
+                                    <option value="DAYS">Days</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style={{ marginBottom: "16px" }}>
+                            <label className="form-label">Reason / Administrative Note</label>
+                            <textarea
+                                value={deactReason}
+                                onChange={(e) => setDeactReason(e.target.value)}
+                                placeholder="e.g. Leave of absence, security investigation, contract hold..."
+                                className="form-input"
+                                rows={2}
+                                style={{ width: "100%", resize: "vertical" }}
+                            />
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                            <button
+                                type="button"
+                                className="btn btn-secondary"
+                                onClick={() => setDeactivatingEmp(null)}
+                                disabled={submittingDeactivation}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-primary"
+                                onClick={handleConfirmDeactivation}
+                                disabled={submittingDeactivation || deactDurationVal < 1}
+                                style={{ display: "flex", alignItems: "center", gap: "6px", background: "#f59e0b", borderColor: "#f59e0b" }}
+                            >
+                                <PauseCircle size={15} />
+                                <span>{submittingDeactivation ? "Suspending..." : `Suspend for ${deactDurationVal} ${deactDurationUnit.toLowerCase()}`}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL 5: PERMANENTLY REMOVE EMPLOYEE */}
+            {removingEmp && (
+                <div className="modal-backdrop">
+                    <div className="modal-card" style={{ maxWidth: "500px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "18px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                <div style={{
+                                    width: "40px",
+                                    height: "40px",
+                                    borderRadius: "12px",
+                                    background: "rgba(239, 68, 68, 0.15)",
+                                    border: "1px solid rgba(239, 68, 68, 0.3)",
+                                    display: "grid",
+                                    placeItems: "center"
+                                }}>
+                                    <Trash2 size={20} style={{ color: "#ef4444" }} />
+                                </div>
+                                <div>
+                                    <h2 style={{ fontSize: "1.15rem", fontWeight: "700", color: "#f87171", margin: 0 }}>
+                                        Permanently Remove Employee
+                                    </h2>
+                                    <p style={{ fontSize: "0.825rem", color: "var(--text-muted)", margin: "2px 0 0" }}>
+                                        This action cannot be undone
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setRemovingEmp(null)}
+                                className="btn-close"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="alert-banner" style={{ background: "rgba(239, 68, 68, 0.08)", border: "1px solid rgba(239, 68, 68, 0.25)", color: "#f87171", padding: "14px", borderRadius: "8px", marginBottom: "16px", fontSize: "0.825rem", lineHeight: "1.4" }}>
+                            <strong>Warning:</strong> You are about to permanently remove <strong>{removingEmp.name}</strong> ({removingEmp.email}) from the database.
+                            <ul style={{ margin: "8px 0 0 16px", padding: 0 }}>
+                                <li>All active sessions and tokens will be immediately invalidated.</li>
+                                <li>Goals, assignments, and authorization tokens will be purged.</li>
+                                <li>The email address <strong>{removingEmp.email}</strong> will be released so they can sign up again in the future if re-hired.</li>
+                            </ul>
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                            <button
+                                type="button"
+                                className="btn btn-secondary"
+                                onClick={() => setRemovingEmp(null)}
+                                disabled={submittingRemoval}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-danger"
+                                onClick={handleConfirmRemoval}
+                                disabled={submittingRemoval}
+                                style={{ display: "flex", alignItems: "center", gap: "6px", background: "#ef4444", borderColor: "#ef4444", color: "#fff" }}
+                            >
+                                <Trash2 size={15} />
+                                <span>{submittingRemoval ? "Removing..." : "Remove Permanently"}</span>
                             </button>
                         </div>
                     </div>

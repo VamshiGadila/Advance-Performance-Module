@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-
 @Schema(description = "Employee registration payload")
 public record SignupRequest(
         @NotBlank(message = "Name is required")
@@ -16,7 +15,7 @@ public record SignupRequest(
         @Email(message = "Invalid email format")
         String email,
         @NotBlank(message = "Password is required")
-        @Size(min = 6, message = "Password must be at least 6 characters")
+        @Size(min = 12, max = 128, message = "Password must be between 12 and 128 characters")
         String password,
         @NotBlank(message = "Confirm password is required")
         String confirmPassword,

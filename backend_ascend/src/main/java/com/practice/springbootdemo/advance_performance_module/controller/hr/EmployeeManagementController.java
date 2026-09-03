@@ -3,6 +3,7 @@ package com.practice.springbootdemo.advance_performance_module.controller.hr;
 import com.practice.springbootdemo.advance_performance_module.dto.common.ApiResponse;
 import com.practice.springbootdemo.advance_performance_module.dto.common.PagedResponse;
 import com.practice.springbootdemo.advance_performance_module.dto.hr.CreateManagerRequest;
+import com.practice.springbootdemo.advance_performance_module.dto.hr.DeactivateEmployeeRequest;
 import com.practice.springbootdemo.advance_performance_module.dto.hr.EmployeeResponse;
 import com.practice.springbootdemo.advance_performance_module.dto.search.EmployeeSearchCriteria;
 import com.practice.springbootdemo.advance_performance_module.service.hr.EmployeeManagementService;
@@ -120,5 +121,52 @@ public class EmployeeManagementController {
     public ApiResponse<PagedResponse<EmployeeResponse>> searchEmployees(EmployeeSearchCriteria criteria) {
         log.debug("REST: GET /api/hr/employees/search - Executing criteria search");
         return ApiResponse.success(searchService.searchEmployees(criteria));
+    }
+
+    @PostMapping("/{id}/deactivate")
+    @Operation(
+            summary = "Temporarily Deactivate Employee",
+            description = "Suspend employee access for a specified duration in hours or days (HR only)"
+    )
+    public ApiResponse<EmployeeResponse> deactivateEmployee(
+            @PathVariable Long id,
+            @Valid @RequestBody DeactivateEmployeeRequest request,
+            org.springframework.security.core.Authentication authentication
+    ) {
+        Long hrUserId = com.practice.springbootdemo.advance_performance_module.security.SecurityUtils.getUserIdFromAuth(authentication);
+        log.info("REST: POST /api/hr/employees/{}/deactivate - HR User ID {} suspending account for {} {}",
+                id, hrUserId, request.durationValue(), request.durationUnit());
+        EmployeeResponse response = service.deactivateEmployee(id, request, hrUserId);
+        return ApiResponse.success("Employee account temporarily deactivated successfully", response);
+    }
+
+    @PostMapping("/{id}/reactivate")
+    @Operation(
+            summary = "Reactivate Employee Account",
+            description = "Restore active access for a previously suspended employee account (HR only)"
+    )
+    public ApiResponse<EmployeeResponse> reactivateEmployee(
+            @PathVariable Long id,
+            org.springframework.security.core.Authentication authentication
+    ) {
+        Long hrUserId = com.practice.springbootdemo.advance_performance_module.security.SecurityUtils.getUserIdFromAuth(authentication);
+        log.info("REST: POST /api/hr/employees/{}/reactivate - HR User ID {} reactivating account", id, hrUserId);
+        EmployeeResponse response = service.reactivateEmployee(id, hrUserId);
+        return ApiResponse.success("Employee account reactivated successfully", response);
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(
+            summary = "Permanently Remove Employee",
+            description = "Permanently purge employee account and all dependent operational records from the DB (HR only)"
+    )
+    public ApiResponse<Void> removeEmployee(
+            @PathVariable Long id,
+            org.springframework.security.core.Authentication authentication
+    ) {
+        Long hrUserId = com.practice.springbootdemo.advance_performance_module.security.SecurityUtils.getUserIdFromAuth(authentication);
+        log.warn("REST: DELETE /api/hr/employees/{} - HR User ID {} executing permanent employee deletion", id, hrUserId);
+        service.deleteEmployee(id, hrUserId);
+        return ApiResponse.success("Employee permanently removed from the system", null);
     }
 }

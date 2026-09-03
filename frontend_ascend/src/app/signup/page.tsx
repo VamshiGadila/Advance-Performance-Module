@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signup, getPublicDepartments, PublicDepartment } from "@/services/authService";
 import { ThemeToggle } from "@/context/ThemeContext";
+import { Eye, EyeOff } from "lucide-react";
+
+const EMAIL_REGEX = /^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
 
 export default function Signup() {
     const router = useRouter();
@@ -13,6 +16,8 @@ export default function Signup() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [departmentId, setDepartmentId] = useState<string>("");
     const [departments, setDepartments] = useState<PublicDepartment[]>([]);
 
@@ -31,11 +36,45 @@ export default function Signup() {
             .catch(() => {});
     }, []);
 
+    const isEmailValid = Boolean(email) && EMAIL_REGEX.test(email.trim());
+    const hasMinLength = password.length >= 12;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?/~`]/.test(password);
+    const isPasswordValid = hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecial;
+
     async function submit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         setError("");
         setSuccess("");
 
+        const cleanEmail = email.trim().toLowerCase();
+        if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
+            setError("Please enter a valid email address (e.g. name@company.com)");
+            return;
+        }
+
+        if (!hasMinLength) {
+            setError("Password must be at least 12 characters long");
+            return;
+        }
+        if (!hasUppercase) {
+            setError("Password must contain at least one uppercase letter (A-Z)");
+            return;
+        }
+        if (!hasLowercase) {
+            setError("Password must contain at least one lowercase letter (a-z)");
+            return;
+        }
+        if (!hasNumber) {
+            setError("Password must contain at least one number (0-9)");
+            return;
+        }
+        if (!hasSpecial) {
+            setError("Password must contain at least one special character (!@#$%^&*...)");
+            return;
+        }
         if (password !== confirmPassword) {
             setError("Passwords do not match");
             return;
@@ -158,7 +197,10 @@ export default function Signup() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="sarah.jenkins@company.com"
-                                style={{ paddingLeft: "42px" }}
+                                style={{
+                                    paddingLeft: "42px",
+                                    borderColor: email.length > 0 && !isEmailValid ? "#ef4444" : undefined
+                                }}
                                 required
                             />
                             <div style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }}>
@@ -168,6 +210,11 @@ export default function Signup() {
                                 </svg>
                             </div>
                         </div>
+                        {email.length > 0 && !isEmailValid && (
+                            <span style={{ color: "#ef4444", fontSize: "0.74rem", marginTop: "4px", display: "block" }}>
+                                Please enter a valid email address (e.g. name@company.com)
+                            </span>
+                        )}
                     </div>
 
                     <div className="form-group">
@@ -218,26 +265,78 @@ export default function Signup() {
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
                         <div className="form-group">
                             <label className="form-label">Password</label>
-                            <input
-                                type="password"
-                                className="form-input"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
-                                required
-                            />
+                            <div style={{ position: "relative" }}>
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    className="form-input"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    style={{ paddingRight: "38px" }}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+                                >
+                                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="form-group">
                             <label className="form-label">Confirm</label>
-                            <input
-                                type="password"
-                                className="form-input"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                placeholder="••••••••"
-                                required
-                            />
+                            <div style={{ position: "relative" }}>
+                                <input
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    className="form-input"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    style={{ paddingRight: "38px" }}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+                                >
+                                    {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Live Password Policy Checklist */}
+                    <div style={{
+                        background: "var(--bg-subtle, rgba(255,255,255,0.03))",
+                        padding: "10px 14px",
+                        borderRadius: "10px",
+                        border: "1px solid var(--border, #374151)",
+                        fontSize: "0.74rem",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                        marginBottom: "6px"
+                    }}>
+                        <span style={{ fontWeight: "700", color: "var(--text-muted, #9ca3af)" }}>Password Requirements:</span>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px" }}>
+                            <span style={{ color: hasMinLength ? "#10b981" : "var(--text-muted, #9ca3af)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                {hasMinLength ? "✓" : "○"} 12+ characters
+                            </span>
+                            <span style={{ color: hasUppercase ? "#10b981" : "var(--text-muted, #9ca3af)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                {hasUppercase ? "✓" : "○"} Uppercase (A-Z)
+                            </span>
+                            <span style={{ color: hasLowercase ? "#10b981" : "var(--text-muted, #9ca3af)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                {hasLowercase ? "✓" : "○"} Lowercase (a-z)
+                            </span>
+                            <span style={{ color: hasNumber ? "#10b981" : "var(--text-muted, #9ca3af)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                {hasNumber ? "✓" : "○"} Number (0-9)
+                            </span>
+                            <span style={{ color: hasSpecial ? "#10b981" : "var(--text-muted, #9ca3af)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                {hasSpecial ? "✓" : "○"} Special char (!@#$...)
+                            </span>
                         </div>
                     </div>
 
@@ -245,7 +344,7 @@ export default function Signup() {
                         type="submit"
                         className="btn btn-primary"
                         style={{ width: "100%", padding: "13px", marginTop: "6px", fontSize: "0.95rem", fontWeight: "700" }}
-                        disabled={loading}
+                        disabled={loading || !name.trim() || !isEmailValid || !password || !confirmPassword || !isPasswordValid || password !== confirmPassword}
                     >
                         {loading ? "Creating Account..." : "Register Employee Account"}
                     </button>

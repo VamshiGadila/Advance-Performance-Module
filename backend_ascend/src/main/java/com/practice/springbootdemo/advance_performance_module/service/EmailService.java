@@ -61,7 +61,7 @@ public class EmailService {
         log.info("   To:      {}", toEmail);
         log.info("   User:    {}", displayName);
         log.info("   OTP:     {}", otp);
-        log.info("   Expires: In 15 minutes");
+        log.info("   Expires: In 1 minute");
         log.info("===================================================================");
     }
 
@@ -98,7 +98,7 @@ public class EmailService {
                   <div class="otp-code">%s</div>
                 </div>
                 <div class="warning">
-                  ⏱️ <strong>Note:</strong> This verification OTP is valid for <strong>15 minutes</strong> only. If you did not request this password reset, please contact your HR administrator immediately.
+                  ⏱️ <strong>Note:</strong> This verification OTP is valid for <strong>10 minutes</strong> only. If you did not request this password reset, please contact your HR administrator immediately.
                 </div>
                 <div class="footer">
                   © 2026 ASCEND Performance Suite • Enterprise HR & OKR Governance

@@ -7,9 +7,11 @@ import com.practice.springbootdemo.advance_performance_module.service.AuthServic
 import com.practice.springbootdemo.advance_performance_module.service.hr.DepartmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +22,7 @@ import java.util.List;
 @RequestMapping("/api/auth")
 @Tag(name = "Authentication", description = "User Registration, Login, Password Management & Session APIs")
 public class AuthController {
+
     private final AuthService authService;
     private final DepartmentService departmentService;
 
@@ -30,7 +33,7 @@ public class AuthController {
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Register Employee", description = "Register a new employee account")
+    @Operation(summary = "Register Employee", description = "Register a new employee account with Argon2id hashing")
     public ApiResponse<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
         log.info("REST: POST /api/auth/signup - Initiating registration for: {}", request.email());
         SignupResponse response = authService.signup(request);
@@ -39,56 +42,106 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "User Login", description = "Authenticate credentials and receive JWT Bearer token (Enforces 5-attempt lockout)")
-    public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        log.info("REST: POST /api/auth/login - Login attempt for: {}", request.email());
-        LoginResponse response = authService.login(request);
-        log.info("REST: POST /api/auth/login - Authentication successful for User ID: {}", response.id());
+    @Operation(summary = "User Login", description = "Authenticate credentials, verify lockout, and receive 24h JWT token")
+    public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        String clientIp = extractClientIp(httpRequest);
+        String userAgent = httpRequest.getHeader("User-Agent");
+        log.info("REST: POST /api/auth/login - Login attempt for: {} from IP: {}", request.email(), clientIp);
+
+        LoginResponse response = authService.login(request, clientIp, userAgent);
         return ApiResponse.success("Login successful", response);
     }
 
     @PostMapping("/forgot-password")
-    @Operation(summary = "Forgot Password", description = "Generate and send 6-digit password reset OTP")
-    public ApiResponse<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        log.info("REST: POST /api/auth/forgot-password - Request received for: {}", request.email());
-        String result = authService.forgotPassword(request);
+    @Operation(summary = "Forgot Password", description = "Generate and send 6-digit password reset OTP (10m validity, 60s cooldown)")
+    public ApiResponse<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request, HttpServletRequest httpRequest) {
+        String clientIp = extractClientIp(httpRequest);
+        log.info("REST: POST /api/auth/forgot-password - Request for: {} from IP: {}", request.email(), clientIp);
+
+        String result = authService.forgotPassword(request, clientIp);
         return ApiResponse.success(result, null);
     }
 
-    @PostMapping("/verify-otp")
-    @Operation(summary = "Verify OTP", description = "Verify 6-digit OTP code before proceeding to password reset")
-    public ApiResponse<String> verifyOtp(@Valid @RequestBody com.practice.springbootdemo.advance_performance_module.dto.auth.VerifyOtpRequest request) {
-        log.info("REST: POST /api/auth/verify-otp - OTP validation received for: {}", request.email());
-        String result = authService.verifyOtp(request);
-        return ApiResponse.success(result, null);
+    @PostMapping({"/verify-otp", "/verify-reset-otp"})
+    @Operation(summary = "Verify Reset OTP", description = "Verify 6-digit OTP code and receive single-use reset authorization token")
+    public ApiResponse<VerifyResetOtpResponse> verifyOtp(@Valid @RequestBody VerifyOtpRequest request, HttpServletRequest httpRequest) {
+        String clientIp = extractClientIp(httpRequest);
+        log.info("REST: POST /api/auth/verify-otp - Verification for: {} from IP: {}", request.email(), clientIp);
+
+        VerifyResetOtpResponse response = authService.verifyResetOtp(request, clientIp);
+        return ApiResponse.success(response.message(), response);
     }
 
     @PostMapping("/reset-password")
-    @Operation(summary = "Reset Password with OTP", description = "Reset account password using 6-digit OTP (Unlocks account and invalidates prior JWTs)")
-    public ApiResponse<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        log.info("REST: POST /api/auth/reset-password - Reset password attempt for: {}", request.email());
-        String result = authService.resetPassword(request);
+    @Operation(summary = "Reset Password", description = "Reset password using reset authorization token; revokes all active sessions")
+    public ApiResponse<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request, HttpServletRequest httpRequest) {
+        String clientIp = extractClientIp(httpRequest);
+        log.info("REST: POST /api/auth/reset-password - Password reset attempt from IP: {}", clientIp);
+
+        String result = authService.resetPassword(request, clientIp);
         return ApiResponse.success(result, null);
     }
 
     @PostMapping("/change-password")
-    @Operation(summary = "Change Password", description = "Change password for authenticated user (Invalidates all existing sessions)")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Change Password", description = "Change password verifying current password; revokes other device sessions")
     public ApiResponse<String> changePassword(
             @Valid @RequestBody ChangePasswordRequest request,
-            Authentication authentication
+            @RequestHeader(value = "X-Session-ID", required = false) String sessionId,
+            Authentication authentication,
+            HttpServletRequest httpRequest
     ) {
         Long userId = SecurityUtils.getUserIdFromAuth(authentication);
+        String clientIp = extractClientIp(httpRequest);
         log.info("REST: POST /api/auth/change-password - Change password for User ID: {}", userId);
-        String result = authService.changePassword(userId, request);
+
+        String result = authService.changePassword(userId, request, sessionId, clientIp);
         return ApiResponse.success(result, null);
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "User Logout", description = "Blacklist active JWT token on the server")
-    public ApiResponse<String> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        log.info("REST: POST /api/auth/logout - Processing logout request");
-        authService.logout(authHeader);
-        return ApiResponse.success("Logged out successfully. Token has been blacklisted.", null);
+    @Operation(summary = "User Logout", description = "Blacklist active JWT token and revoke session")
+    public ApiResponse<String> logout(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestHeader(value = "X-Session-ID", required = false) String sessionId,
+            Authentication authentication
+    ) {
+        Long userId = authentication != null ? SecurityUtils.getUserIdFromAuth(authentication) : null;
+        log.info("REST: POST /api/auth/logout - Processing logout request for User ID: {}", userId);
+
+        authService.logout(authHeader, userId, sessionId);
+        return ApiResponse.success("You have been signed out successfully.", null);
+    }
+
+    @PostMapping("/logout-all")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Logout All Sessions", description = "Revoke all active device sessions for current user")
+    public ApiResponse<String> logoutAll(Authentication authentication) {
+        Long userId = SecurityUtils.getUserIdFromAuth(authentication);
+        log.info("REST: POST /api/auth/logout-all - Revoking all sessions for User ID: {}", userId);
+
+        authService.logoutAll(userId);
+        return ApiResponse.success("All active sessions have been signed out.", null);
+    }
+
+    @GetMapping("/sessions")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Get Active Sessions", description = "List all active sessions for current user")
+    public ApiResponse<List<SessionResponse>> getActiveSessions(
+            @RequestHeader(value = "X-Session-ID", required = false) String currentSessionId,
+            Authentication authentication
+    ) {
+        Long userId = SecurityUtils.getUserIdFromAuth(authentication);
+        return ApiResponse.success(authService.getActiveSessions(userId, currentSessionId));
+    }
+
+    @DeleteMapping("/sessions/{sessionId}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Revoke Specific Session", description = "Sign out a specific device session")
+    public ApiResponse<String> revokeSession(@PathVariable String sessionId, Authentication authentication) {
+        Long userId = SecurityUtils.getUserIdFromAuth(authentication);
+        authService.revokeSession(userId, sessionId);
+        return ApiResponse.success("The selected session has been signed out.", null);
     }
 
     @GetMapping("/departments")
@@ -99,10 +152,19 @@ public class AuthController {
     }
 
     @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get Current User", description = "Retrieve profile details for authenticated user")
     public ApiResponse<LoginResponse> me(Authentication authentication) {
         Long userId = SecurityUtils.getUserIdFromAuth(authentication);
         log.debug("REST: GET /api/auth/me - Fetching profile for User ID: {}", userId);
         return ApiResponse.success(authService.getCurrentUser(userId));
+    }
+
+    private String extractClientIp(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }
