@@ -53,6 +53,6 @@ public class RequestPerformanceLoggingFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs") || path.endsWith(".ico");
+        return path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs") || path.startsWith("/actuator") || path.endsWith(".ico");
     }
 }

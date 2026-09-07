@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
  * it is explicitly accessed.
  */
 @Entity
-@Table(name = "policies")
+@Table(name = "hrms_policies")
 @Getter
 @Setter
 @NoArgsConstructor

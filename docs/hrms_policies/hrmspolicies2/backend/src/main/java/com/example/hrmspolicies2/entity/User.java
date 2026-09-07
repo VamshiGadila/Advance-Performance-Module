@@ -21,7 +21,7 @@ import java.util.List;
  * throwing InvalidDefinitionException / HttpMessageConversionException.
  */
 @Entity
-@Table(name = "users")
+@Table(name = "hrms_users")
 @Getter
 @Setter
 @NoArgsConstructor

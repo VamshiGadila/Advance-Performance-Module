@@ -103,12 +103,17 @@ export default function ForgotPassword() {
     const isOtpLockedOut = error.toLowerCase().includes("locked") || error.toLowerCase().includes("lockout");
 
     // Password Policy Regex Evaluation
+    const emailPrefix = email.includes("@") ? email.split("@")[0].toLowerCase().trim() : email.toLowerCase().trim();
+    const lowerNewPassword = newPassword.toLowerCase();
+    const containsUsername = Boolean(newPassword && emailPrefix && emailPrefix.length >= 3 && lowerNewPassword.includes(emailPrefix));
+    const isNotUsername = !containsUsername;
+
     const hasMinLength = newPassword.length >= 12;
     const hasUppercase = /[A-Z]/.test(newPassword);
     const hasLowercase = /[a-z]/.test(newPassword);
     const hasNumber = /[0-9]/.test(newPassword);
     const hasSpecial = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?/~`]/.test(newPassword);
-    const isNewPasswordValid = hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecial;
+    const isNewPasswordValid = hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecial && isNotUsername;
 
     // Step 1: Send OTP to Email
     const handleSendOtp = async (e: FormEvent) => {
@@ -194,6 +199,11 @@ export default function ForgotPassword() {
         e.preventDefault();
         setError("");
         setSuccessMsg("");
+
+        if (containsUsername) {
+            setError("Password cannot contain or match your email username (" + emailPrefix + ").");
+            return;
+        }
 
         if (!hasMinLength) {
             setError("New password must be at least 12 characters long.");
@@ -700,6 +710,9 @@ export default function ForgotPassword() {
                                 </span>
                                 <span style={{ color: hasSpecial ? "#10b981" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
                                     {hasSpecial ? "✓" : "○"} Special char (!@#$...)
+                                </span>
+                                <span style={{ color: isNotUsername && newPassword ? "#10b981" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                    {isNotUsername && newPassword ? "✓" : "○"} Not username/email
                                 </span>
                             </div>
                         </div>

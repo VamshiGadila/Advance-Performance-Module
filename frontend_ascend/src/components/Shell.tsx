@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { AuthUser, getUser, logout } from "@/lib/auth";
 import { ThemeToggle } from "@/context/ThemeContext";
 import { getMyProfile, updateMyProfile, UserProfile, UpdateProfileRequest, logoutApi } from "@/services/authService";
+import { initIdleSessionTracker, resetIdleTimer } from "@/lib/idleTimeout";
 
 import {
     LayoutDashboard,
@@ -26,7 +27,8 @@ import {
     ChevronDown,
     ChevronUp,
     Eye,
-    EyeOff
+    EyeOff,
+    Clock
 } from "lucide-react";
 
 interface ShellProps {
@@ -39,6 +41,22 @@ export default function Shell({ children }: ShellProps) {
 
     const [user, setUser] = useState<AuthUser | null>(null);
     const [mounted, setMounted] = useState(false);
+    const [appSwitcherOpen, setAppSwitcherOpen] = useState(false);
+
+    // Inactivity / Idle Warning Modal State
+    const [idleWarningSeconds, setIdleWarningSeconds] = useState<number | null>(null);
+
+    const handleStayActive = () => {
+        resetIdleTimer();
+        setIdleWarningSeconds(null);
+    };
+
+    const handleIdleLogoutNow = () => {
+        setIdleWarningSeconds(null);
+        logout();
+        logoutApi().catch(() => {});
+        router.replace("/login?reason=idle_timeout");
+    };
 
     // Profile Modal State
     const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -60,12 +78,28 @@ export default function Shell({ children }: ShellProps) {
     const [showConfirmPass, setShowConfirmPass] = useState(false);
 
     // Password Policy Regex Evaluation
+    const userEmailPrefix = user?.email?.includes("@") ? user.email.split("@")[0].toLowerCase().trim() : user?.email?.toLowerCase().trim() || "";
+    const userNamePart = (nameInput || user?.name || "").toLowerCase().trim();
+    const userCodePart = (user?.employeeCode || "").toLowerCase().trim();
+    const lowerProfilePass = newPasswordInput.toLowerCase();
+
+    const profileContainsUsername = Boolean(
+        newPasswordInput && (
+            (userEmailPrefix && userEmailPrefix.length >= 3 && lowerProfilePass.includes(userEmailPrefix)) ||
+            (userNamePart && userNamePart.length >= 3 && lowerProfilePass.includes(userNamePart)) ||
+            (userCodePart && userCodePart.length >= 3 && lowerProfilePass.includes(userCodePart))
+        )
+    );
+    const profileIsNotUsername = !profileContainsUsername;
+
     const profileHasMinLength = newPasswordInput.length >= 12;
     const profileHasUppercase = /[A-Z]/.test(newPasswordInput);
     const profileHasLowercase = /[a-z]/.test(newPasswordInput);
     const profileHasNumber = /[0-9]/.test(newPasswordInput);
     const profileHasSpecial = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?/~`]/.test(newPasswordInput);
-    const isProfilePasswordValid = !newPasswordInput || (profileHasMinLength && profileHasUppercase && profileHasLowercase && profileHasNumber && profileHasSpecial);
+    const isProfilePasswordValid = !newPasswordInput || (
+        profileHasMinLength && profileHasUppercase && profileHasLowercase && profileHasNumber && profileHasSpecial && profileIsNotUsername
+    );
 
     const [savingProfile, setSavingProfile] = useState(false);
     const [profileError, setProfileError] = useState("");
@@ -107,6 +141,12 @@ export default function Shell({ children }: ShellProps) {
         }
 
         if (showPasswordChange && newPasswordInput) {
+            if (profileContainsUsername) {
+                setProfileError("New password cannot contain or match your username, name, or employee code.");
+                setSavingProfile(false);
+                return;
+            }
+
             if (!profileHasMinLength) {
                 setProfileError("New password must be at least 12 characters long.");
                 setSavingProfile(false);
@@ -193,7 +233,48 @@ export default function Shell({ children }: ShellProps) {
         setMounted(true);
         const currentUser = getUser();
         setUser(currentUser);
-    }, []);
+
+        const isPublic = pathname === "/login" || pathname === "/signup" || pathname === "/forgot-password";
+
+        // Cross-App Single Logout Listener: if logged out from Policies or anywhere, log out immediately
+        const checkGlobalSession = () => {
+            const hasActiveSession = document.cookie.includes("app_suite_active_session=true");
+            if (!hasActiveSession && !isPublic) {
+                logout();
+                router.replace("/login");
+            }
+        };
+
+        window.addEventListener("focus", checkGlobalSession);
+        window.addEventListener("visibilitychange", checkGlobalSession);
+        const interval = setInterval(checkGlobalSession, 1500);
+
+        // Initialize Inactivity / Idle Session Auto-Logout Tracker with console logs & UI countdown
+        let cleanupIdleTracker = () => {};
+        if (currentUser && !isPublic) {
+            cleanupIdleTracker = initIdleSessionTracker({
+                onTimeout: () => {
+                    setIdleWarningSeconds(null);
+                    logout();
+                    logoutApi().catch(() => {});
+                    router.replace("/login?reason=idle_timeout");
+                },
+                onWarningCountdown: (seconds) => {
+                    setIdleWarningSeconds(seconds);
+                },
+                onWarningCleared: () => {
+                    setIdleWarningSeconds(null);
+                }
+            });
+        }
+
+        return () => {
+            window.removeEventListener("focus", checkGlobalSession);
+            window.removeEventListener("visibilitychange", checkGlobalSession);
+            clearInterval(interval);
+            cleanupIdleTracker();
+        };
+    }, [pathname, router]);
 
     const isPublicPage =
         pathname === "/login" ||
@@ -381,6 +462,116 @@ export default function Shell({ children }: ShellProps) {
                             <UserCircle size={15} />
                             <span>My Profile</span>
                         </button>
+
+                        {/* 9-DOTS GOOGLE SUITE APP SWITCHER */}
+                        <div style={{ position: "relative" }}>
+                            <button
+                                type="button"
+                                onClick={() => setAppSwitcherOpen(!appSwitcherOpen)}
+                                className="btn btn-secondary btn-sm"
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: "36px",
+                                    height: "36px",
+                                    padding: 0,
+                                    borderRadius: "8px",
+                                    background: appSwitcherOpen ? "rgba(99, 102, 241, 0.2)" : "rgba(255, 255, 255, 0.05)",
+                                    borderColor: appSwitcherOpen ? "var(--primary)" : "var(--border)",
+                                    color: "var(--text-main)",
+                                    cursor: "pointer"
+                                }}
+                                title="Google Suite Enterprise Apps Launcher"
+                            >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <circle cx="5" cy="5" r="2.5"/><circle cx="12" cy="5" r="2.5"/><circle cx="19" cy="5" r="2.5"/>
+                                    <circle cx="5" cy="12" r="2.5"/><circle cx="12" cy="12" r="2.5"/><circle cx="19" cy="12" r="2.5"/>
+                                    <circle cx="5" cy="19" r="2.5"/><circle cx="12" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/>
+                                </svg>
+                            </button>
+
+                            {appSwitcherOpen && (
+                                <>
+                                    <div
+                                        style={{ position: "fixed", inset: 0, zIndex: 998 }}
+                                        onClick={() => setAppSwitcherOpen(false)}
+                                    />
+                                    <div
+                                        style={{
+                                            position: "absolute",
+                                            top: "44px",
+                                            right: 0,
+                                            width: "300px",
+                                            background: "var(--bg-surface, #1e293b)",
+                                            border: "1px solid var(--border, #334155)",
+                                            borderRadius: "14px",
+                                            boxShadow: "0 12px 30px rgba(0,0,0,0.45)",
+                                            padding: "16px",
+                                            zIndex: 999,
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            gap: "12px"
+                                        }}
+                                    >
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                            <span style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)" }}>
+                                                🏢 Enterprise Apps Suite
+                                            </span>
+                                        </div>
+
+                                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                                            {/* App 1: Ascend Performance (Current) */}
+                                            <div
+                                                style={{
+                                                    padding: "14px 10px",
+                                                    borderRadius: "10px",
+                                                    background: "rgba(99, 102, 241, 0.15)",
+                                                    border: "1px solid rgba(99, 102, 241, 0.4)",
+                                                    textAlign: "center",
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    alignItems: "center",
+                                                    gap: "5px"
+                                                }}
+                                            >
+                                                <div style={{ fontSize: "1.4rem" }}>⚡</div>
+                                                <div style={{ fontWeight: "700", fontSize: "0.85rem", color: "var(--text-main)" }}>Ascend</div>
+                                                <span style={{ fontSize: "0.68rem", color: "#818cf8", fontWeight: "600" }}>Active Module</span>
+                                            </div>
+
+                                            {/* App 2: HRMS Policies */}
+                                            <a
+                                                href={`http://localhost:8081/oauth2/authorization/google${user?.email && user.email.includes("@") && !user.email.endsWith(".local") ? `?login_hint=${encodeURIComponent(user.email)}` : ""}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={() => setAppSwitcherOpen(false)}
+                                                style={{
+                                                    padding: "14px 10px",
+                                                    borderRadius: "10px",
+                                                    background: "rgba(255, 255, 255, 0.04)",
+                                                    border: "1px solid var(--border)",
+                                                    textAlign: "center",
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    alignItems: "center",
+                                                    gap: "5px",
+                                                    textDecoration: "none",
+                                                    color: "var(--text-main)",
+                                                    cursor: "pointer",
+                                                    transition: "all 0.2s ease"
+                                                }}
+                                                title="Open HRMS Policies Module in a new window"
+                                            >
+                                                <div style={{ fontSize: "1.4rem" }}>📜</div>
+                                                <div style={{ fontWeight: "700", fontSize: "0.85rem" }}>HR Policies</div>
+                                                <span style={{ fontSize: "0.68rem", color: "#34d399", fontWeight: "700" }}>Open Suite ↗</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
 
                         <ThemeToggle />
 
@@ -717,6 +908,9 @@ export default function Shell({ children }: ShellProps) {
                                                             <span style={{ color: profileHasSpecial ? "#10b981" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
                                                                 {profileHasSpecial ? "✓" : "○"} Special char (!@#$...)
                                                             </span>
+                                                            <span style={{ color: profileIsNotUsername && newPasswordInput ? "#10b981" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                                                {profileIsNotUsername && newPasswordInput ? "✓" : "○"} Not username/name
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 )}
@@ -746,6 +940,105 @@ export default function Shell({ children }: ShellProps) {
                                     </div>
                                 </form>
                             ) : null}
+                        </div>
+                    </div>
+                )}
+
+                {/* ================= INACTIVITY / IDLE SESSION WARNING MODAL ================= */}
+                {idleWarningSeconds !== null && (
+                    <div
+                        style={{
+                            position: "fixed",
+                            inset: 0,
+                            zIndex: 999999,
+                            background: "rgba(0, 0, 0, 0.7)",
+                            backdropFilter: "blur(6px)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: "20px"
+                        }}
+                    >
+                        <div
+                            style={{
+                                background: "var(--card-bg, #ffffff)",
+                                color: "var(--text-main, #111827)",
+                                border: "1px solid var(--border)",
+                                borderRadius: "16px",
+                                width: "100%",
+                                maxWidth: "420px",
+                                padding: "28px",
+                                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4)",
+                                textAlign: "center"
+                            }}
+                        >
+                            <div
+                                style={{
+                                    width: "60px",
+                                    height: "60px",
+                                    margin: "0 auto 16px",
+                                    background: idleWarningSeconds <= 10 ? "rgba(239, 68, 68, 0.15)" : "rgba(245, 158, 11, 0.15)",
+                                    color: idleWarningSeconds <= 10 ? "#ef4444" : "#f59e0b",
+                                    borderRadius: "50%",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center"
+                                }}
+                            >
+                                <Clock size={30} />
+                            </div>
+
+                            <h3 style={{ fontSize: "1.25rem", fontWeight: "800", marginBottom: "8px" }}>
+                                Inactivity Warning
+                            </h3>
+
+                            <p style={{ fontSize: "0.88rem", color: "var(--text-muted)", lineHeight: "1.5", marginBottom: "20px" }}>
+                                You have been inactive for a while. For your security, you will be automatically logged out in:
+                            </p>
+
+                            <div
+                                style={{
+                                    fontSize: "2.5rem",
+                                    fontWeight: "900",
+                                    color: idleWarningSeconds <= 10 ? "#ef4444" : "#f59e0b",
+                                    marginBottom: "24px",
+                                    fontFamily: "monospace",
+                                    letterSpacing: "1px"
+                                }}
+                            >
+                                {idleWarningSeconds}s
+                            </div>
+
+                            <div style={{ display: "flex", gap: "10px" }}>
+                                <button
+                                    type="button"
+                                    onClick={handleIdleLogoutNow}
+                                    className="btn btn-secondary"
+                                    style={{
+                                        flex: 1,
+                                        padding: "10px 14px",
+                                        fontWeight: "600",
+                                        borderRadius: "10px",
+                                        cursor: "pointer"
+                                    }}
+                                >
+                                    Log Out
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleStayActive}
+                                    className="btn btn-primary"
+                                    style={{
+                                        flex: 1,
+                                        padding: "10px 14px",
+                                        fontWeight: "700",
+                                        borderRadius: "10px",
+                                        cursor: "pointer"
+                                    }}
+                                >
+                                    Stay Active
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

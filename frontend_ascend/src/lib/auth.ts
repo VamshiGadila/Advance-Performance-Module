@@ -66,6 +66,8 @@ export function saveUser(user: AuthUser): void {
         "ascend_user",
         JSON.stringify(user)
     );
+
+    document.cookie = "app_suite_active_session=true; path=/; max-age=86400; SameSite=Lax";
 }
 
 // =====================================================
@@ -79,4 +81,5 @@ export function logout(): void {
 
     localStorage.removeItem("ascend_token");
     localStorage.removeItem("ascend_user");
+    document.cookie = "app_suite_active_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
 }
