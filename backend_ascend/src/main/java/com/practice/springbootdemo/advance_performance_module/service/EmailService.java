@@ -55,13 +55,13 @@ public class EmailService {
             log.info("SMTP credentials not fully configured (spring.mail.username). Delivering OTP via console log.");
         }
 
-        // Always log OTP for development convenience
+        // Secure event logging without exposing sensitive OTP value
         log.info("===================================================================");
-        log.info("📧 [ASCEND EMAIL SERVICE - PASSWORD RESET OTP]");
+        log.info("📧 [ASCEND EMAIL SERVICE - PASSWORD RESET NOTIFICATION]");
         log.info("   To:      {}", toEmail);
         log.info("   User:    {}", displayName);
-        log.info("   OTP:     {}", otp);
-        log.info("   Expires: In 1 minute");
+        log.info("   Status:  OTP generated and securely queued for delivery");
+        log.info("   Expires: 10 minutes");
         log.info("===================================================================");
     }
 

@@ -83,12 +83,12 @@ public class AuthService {
             throw new BadRequestException("Passwords do not match");
         }
 
-        passwordPolicyService.validateNewPassword(request.password(), request.confirmPassword(), null, null);
-
         String email = request.email() != null ? request.email().trim().toLowerCase() : "";
         if (email.isBlank() || !EMAIL_PATTERN.matcher(email).matches()) {
             throw new BadRequestException("Invalid email format: Please provide a valid work email address (e.g. name@company.com)");
         }
+
+        passwordPolicyService.validateNewPassword(request.password(), request.confirmPassword(), null, null, email + " " + (request.name() != null ? request.name() : ""));
         if (userRepository.existsByEmailIgnoreCase(email)) {
             log.warn("Signup validation failed: Email '{}' already registered", email);
             throw new BadRequestException("Email is already registered: " + email);
@@ -231,7 +231,7 @@ public class AuthService {
         userRepository.save(user);
 
         // Register multi-device active session
-        sessionService.createSession(user, clientIp, userAgent, LocalDateTime.now().plusHours(24));
+        sessionService.createSession(user, clientIp, userAgent, LocalDateTime.now().plusSeconds(30));
 
         String token = jwtService.generate(user);
         securityAuditService.recordEvent(user.getId(), email, "LOGIN_SUCCESS", clientIp, "Login successful via LOCAL");

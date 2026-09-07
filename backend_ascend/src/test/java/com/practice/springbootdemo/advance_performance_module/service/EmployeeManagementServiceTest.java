@@ -62,6 +62,8 @@ class EmployeeManagementServiceTest {
     private SecurityAuditService securityAuditService;
     @Mock
     private SessionService sessionService;
+    @Mock
+    private PasswordPolicyService passwordPolicyService;
 
     @InjectMocks
     private EmployeeManagementService employeeManagementService;

@@ -1,5 +1,6 @@
 package com.practice.springbootdemo.advance_performance_module.security;
 
+import com.practice.springbootdemo.advance_performance_module.config.CorrelationIdFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -24,6 +25,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CorrelationIdFilter correlationIdFilter;
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
     private final CustomOAuth2UserService customOAuth2UserService;
@@ -33,6 +35,7 @@ public class SecurityConfig {
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
+            CorrelationIdFilter correlationIdFilter,
             CustomAuthenticationEntryPoint authenticationEntryPoint,
             CustomAccessDeniedHandler accessDeniedHandler,
             CustomOAuth2UserService customOAuth2UserService,
@@ -41,6 +44,7 @@ public class SecurityConfig {
             ClientRegistrationRepository clientRegistrationRepository
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.correlationIdFilter = correlationIdFilter;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.accessDeniedHandler = accessDeniedHandler;
         this.customOAuth2UserService = customOAuth2UserService;
@@ -69,6 +73,7 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
 
+                .headers(headers -> headers.frameOptions(frame -> frame.disable()))
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler)
@@ -86,8 +91,22 @@ public class SecurityConfig {
                                 "/swagger-ui/index.html",
                                 "/swagger-resources/**",
                                 "/webjars/**",
-                                "/error"
+                                "/error",
+                                "/h2-console",
+                                "/h2-console/**",
+                                "/actuator.html",
+                                "/actuator",
+                                "/actuator/",
+                                "/actuator/health",
+                                "/actuator/health/**",
+                                "/actuator/info",
+                                "/actuator/beans",
+                                "/actuator/mappings",
+                                "/actuator/env"
                         ).permitAll()
+                        .requestMatchers(
+                                "/actuator/**"
+                        ).hasRole("HR")
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/hr/performance-cycles/**"
@@ -123,6 +142,10 @@ public class SecurityConfig {
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
+                )
+                .addFilterBefore(
+                        correlationIdFilter,
+                        JwtAuthenticationFilter.class
                 );
 
         return http.build();

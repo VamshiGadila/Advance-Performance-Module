@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -29,6 +30,10 @@ public class PasswordPolicyService {
     );
 
     public void validateNewPassword(String newPassword, String confirmPassword, User user, String currentPassword) {
+        validateNewPassword(newPassword, confirmPassword, user, currentPassword, null);
+    }
+
+    public void validateNewPassword(String newPassword, String confirmPassword, User user, String currentPassword, String additionalIdentifier) {
         if (newPassword == null || newPassword.isBlank()) {
             throw new BadRequestException("New password cannot be empty");
         }
@@ -51,7 +56,6 @@ public class PasswordPolicyService {
             throw new BadRequestException("This password is too common. Please choose a more secure password.");
         }
 
-
         // Regex Complexity Validation
         if (!newPassword.matches(".*[A-Z].*")) {
             throw new BadRequestException("Password must contain at least one uppercase letter (A-Z)");
@@ -69,9 +73,11 @@ public class PasswordPolicyService {
             throw new BadRequestException("Password must contain at least one special character (!@#$%^&*...)");
         }
 
+        // Username / Email / Name disallowance check
+        validateNotUsernameOrName(newPassword, user, additionalIdentifier);
+
         // User specific checks that require user entity
         if (user != null) {
-
             // Reject matching current password
             if (user.getPasswordHash() != null && passwordService.matches(newPassword, user.getPasswordHash())) {
                 throw new BadRequestException("New password must be different from your current password");
@@ -83,6 +89,53 @@ public class PasswordPolicyService {
                 if (passwordService.matches(newPassword, ph.getPasswordHash())) {
                     throw new BadRequestException("You cannot reuse any of your last 5 passwords.");
                 }
+            }
+        }
+    }
+
+    private void validateNotUsernameOrName(String password, User user, String additionalIdentifier) {
+        String lowerPassword = password.toLowerCase().trim();
+        Set<String> forbidden = new HashSet<>();
+
+        if (user != null) {
+            if (user.getEmail() != null) {
+                String email = user.getEmail().toLowerCase().trim();
+                forbidden.add(email);
+                int atIdx = email.indexOf('@');
+                if (atIdx > 0) {
+                    forbidden.add(email.substring(0, atIdx));
+                }
+            }
+            if (user.getName() != null) {
+                forbidden.add(user.getName().toLowerCase().trim());
+                for (String part : user.getName().toLowerCase().split("\\s+")) {
+                    if (part.length() >= 3) {
+                        forbidden.add(part);
+                    }
+                }
+            }
+            if (user.getEmployeeCode() != null) {
+                forbidden.add(user.getEmployeeCode().toLowerCase().trim());
+            }
+        }
+
+        if (additionalIdentifier != null && !additionalIdentifier.isBlank()) {
+            String ident = additionalIdentifier.toLowerCase().trim();
+            forbidden.add(ident);
+            int atIdx = ident.indexOf('@');
+            if (atIdx > 0) {
+                forbidden.add(ident.substring(0, atIdx));
+            }
+            for (String part : ident.split("[\\s@._-]+")) {
+                if (part.length() >= 3) {
+                    forbidden.add(part);
+                }
+            }
+        }
+
+        for (String word : forbidden) {
+            if (word.length() >= 3 && lowerPassword.contains(word)) {
+                throw new BadRequestException("Password cannot contain or match your username, name, or email address ('" + word + "')");
             }
         }
     }

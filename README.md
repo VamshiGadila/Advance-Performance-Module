@@ -17,12 +17,15 @@ An enterprise-grade **Performance Appraisal, OKR/KPI Tracking, and HR Governance
 2. [System Architecture](#-system-architecture)
 3. [Role-Based Access Control (RBAC)](#-role-based-access-control-rbac)
 4. [Security & JWT Authentication Flow](#-security--jwt-authentication-flow)
-5. [Tech Stack](#-tech-stack)
-6. [API Endpoints Reference](#-api-endpoints-reference)
-7. [Unit Testing & Mockito Test Suite](#-unit-testing--mockito-test-suite)
-8. [Configuration & Environment Profiles](#-configuration--environment-profiles)
-9. [Local Setup & Running Instructions](#-local-setup--running-instructions)
-10. [Default Seeded Test Accounts](#-default-seeded-test-accounts)
+5. [Structured Logging & Correlation IDs](#-structured-logging--correlation-ids)
+6. [Monitoring & Spring Boot Actuator](#-monitoring--spring-boot-actuator)
+7. [Environment Profiles & Externalized Config](#-environment-profiles--externalized-config)
+8. [Tech Stack](#-tech-stack)
+9. [API Endpoints Reference](#-api-endpoints-reference)
+10. [Unit Testing & Test Suites (100 Tests)](#-unit-testing--test-suites-100-tests)
+11. [Local Setup & Running Instructions](#-local-setup--running-instructions)
+12. [Default Seeded Test Accounts](#-default-seeded-test-accounts)
+13. [Google OAuth 2.0 Authentication](#-google-oauth-20-third-party-authentication)
 
 ---
 
@@ -103,17 +106,135 @@ Interactive Swagger Documentation with JWT authorization is accessible at:
 
 ---
 
+## 🪵 Structured Logging & Correlation IDs
+
+ASCEND employs a production-grade, asynchronous structured logging architecture backed by **Logback** and **SLF4J MDC (Mapped Diagnostic Context)**:
+
+### 🔍 Request Correlation & Distributed Tracing
+- Every incoming HTTP request is intercepted by [`CorrelationIdFilter`](backend_ascend/src/main/java/com/practice/springbootdemo/advance_performance_module/config/CorrelationIdFilter.java) at `Ordered.HIGHEST_PRECEDENCE`.
+- If the client sends an `X-Correlation-ID` header, it is reused; otherwise, a unique UUID (`java.util.UUID.randomUUID()`) is generated.
+- The `correlationId` and `clientIp` are injected into SLF4J MDC and returned in the HTTP response header `X-Correlation-ID`.
+- Context is strictly cleaned up in a `finally` block to prevent thread pool leakage.
+
+### 🛡️ Zero Sensitive Data Leaks
+- Passwords, raw OTPs, JWT tokens, and OAuth secrets are **strictly excluded** from all log statements.
+- Email dispatch logs record operational metadata without logging raw verification secrets.
+
+### 📁 Multi-Profile Log Routing
+| Profile | Console Output | Log File Location | Retention / Cap |
+| :--- | :--- | :--- | :--- |
+| **`dev`** | Colorized ANSI (`%highlight`, `%magenta`, `%cyan`) | `logs/ascend-dev.log` | 30 days, 1 GB cap |
+| **`prod`** | ISO-8601 Structured Timestamps | `logs/ascend-prod.log` (Async Appender) | 60 days, 5 GB cap, 100MB chunk |
+| **`test`** | Minimal console logs | Console only | N/A |
+
+Sample Dev Log:
+```
+2026-09-07 16:29:42.381 DEBUG [trace-health-check-001] [main] o.s.s.w.a.AnonymousAuthenticationFilter : Set SecurityContextHolder to anonymous SecurityContext
+2026-09-07 16:29:42.384 DEBUG [trace-health-check-001] [main] o.s.security.web.FilterChainProxy : Secured GET /actuator/health
+```
+
+---
+
+## 📊 Monitoring & Spring Boot Actuator
+
+ASCEND integrates **Spring Boot Actuator** for cloud/container health probes, subsystem diagnostics, and application monitoring.
+
+### 🩺 Endpoints & Security Policy
+| Endpoint | Method | Security Policy | Purpose |
+| :--- | :--- | :--- | :--- |
+| `/actuator/health` | `GET` | **Public (`permitAll()`)** | Liveness, readiness, and composite database health probes |
+| `/actuator/info` | `GET` | **Public (`permitAll()`)** | Application metadata, Java runtime, and OS diagnostics |
+| `/actuator/metrics` | `GET` | **Secured (`ROLE_HR`)** | JVM heap, garbage collection, and thread metrics |
+| `/actuator/metrics/{metric}` | `GET` | **Secured (`ROLE_HR`)** | Granular metric inspection (e.g. `jvm.memory.used`) |
+
+### 🛠️ Custom Health Indicator: `AscendHealthIndicator`
+Registered as bean `ascendApp`, providing real-time diagnostics:
+```json
+{
+  "status": "UP",
+  "components": {
+    "ascendApp": {
+      "status": "UP",
+      "details": {
+        "database.status": "CONNECTED",
+        "database.product": "PostgreSQL",
+        "database.version": "18.0",
+        "subsystem": "ASCEND Performance & OKR Tracking Engine",
+        "statusDescription": "Operational - Ready to accept traffic",
+        "jvm.freeMemoryMb": 245,
+        "jvm.usedMemoryMb": 150,
+        "jvm.totalMemoryMb": 395,
+        "jvm.maxMemoryMb": 4096
+      }
+    },
+    "db": {
+      "status": "UP"
+    },
+    "diskSpace": {
+      "status": "UP"
+    },
+    "ping": {
+      "status": "UP"
+    }
+  }
+}
+```
+
+---
+
+## ⚙️ Environment Profiles & Externalized Config
+
+All environment settings, database credentials, secrets, and connection pools are fully externalized:
+
+| Profile | Target Database | DDL Auto | Hikari Pool | Logging Level |
+| :--- | :--- | :--- | :--- | :--- |
+| **`dev`** (Default) | `jdbc:postgresql://localhost:5432/advance_ascend_performance` | `update` | 10 conns | `DEBUG` (com.practice.springbootdemo) |
+| **`test`** | `jdbc:h2:mem:ascend_test;MODE=PostgreSQL` | `create-drop` | In-memory | `WARN` / `INFO` |
+| **`prod`** | Strict fail-fast via `${PROD_DB_URL}` | `validate` | 30 conns (high-concurrency) | `WARN` |
+
+### 🔑 Environment Variables Reference Template (`.env.example`)
+To configure local or production environments, copy `.env.example` to `.env`:
+```bash
+# Profile selection
+SPRING_PROFILES_ACTIVE=dev
+PORT=8080
+
+# JWT Secrets (Minimum 256-bit HMAC-SHA256)
+JWT_SECRET=ASCEND_PERFORMANCE_SUPER_SECURE_JWT_SECRET_KEY_2026_PROD
+JWT_EXPIRATION_MS=86400000
+
+# Database
+DB_URL=jdbc:postgresql://localhost:5432/advance_ascend_performance
+DB_USERNAME=postgres
+DB_PASSWORD=1234
+
+# Mail Dispatch (Gmail / SMTP)
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+
+# Google OAuth 2.0
+GOOGLE_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
+FRONTEND_OAUTH_REDIRECT_URI=http://localhost:3000/login
+```
+
+---
+
 ## 💻 Tech Stack
 
 ### Backend
 - **Java 21 (LTS)** & **Spring Boot 4.1.0**
+- **Spring Boot Actuator** & **Micrometer** (Health & telemetry)
 - **Spring Data JPA** & **Hibernate ORM** (Dynamic JPA Criteria Specifications)
-- **Spring Security** & **jjwt 0.12.6** (Stateless JWT Authentication)
+- **Spring Security** & **jjwt 0.12.6** (Stateless JWT Authentication & OAuth 2.0)
 - **PostgreSQL 18** with **HikariCP** connection pooling
+- **H2 Database** (Zero-dependency test suite execution)
 - **Jakarta Bean Validation** (`@Valid`, `@NotNull`, `@Min`, `@Max`)
 - **springdoc-openapi 2.8.9** (Swagger UI documentation)
-- **JUnit 5**, **Mockito**, and **AssertJ** (Unit testing)
-- **Lombok** & **SLF4J** logging with correlation tracking
+- **JUnit 5**, **Mockito**, and **AssertJ** (Automated test suites)
+- **Lombok** & **SLF4J / Logback** (Structured multi-profile logging & MDC correlation IDs)
 
 ### Frontend
 - **Next.js 16 (App Router)** & **React 19**
@@ -173,35 +294,6 @@ Interactive Swagger Documentation with JWT authorization is accessible at:
 
 ### 5. Advanced Dynamic Search (`/api/employees/search`)
 * `GET /api/employees/search` — Multi-field filtering (Name, Code, Department, Role, Skill, Location, Experience) with dynamic sorting & pagination.
-
----
-
-## 🧪 Unit Testing & Mockito Test Suite
-
-The service layer is rigorously tested using **JUnit 5**, **Mockito**, and **AssertJ**, covering positive, negative, and edge scenarios (53/53 tests passing):
-
-```bash
-./mvnw.cmd test
-```
-
-### Key Test Suites:
-- **`AuthServiceTest`**: User registration, login authentication, password hash checks, duplicate email protection, and JWT generation.
-- **`PerformanceCycleServiceTest`**: Cycle lifecycle transitions (`DRAFT` $\rightarrow$ `ACTIVE` $\rightarrow$ `CLOSED`), date overlap rules, and closure constraints.
-- **`ManagerAssignmentServiceTest`**: Active hierarchy linkages, deactivation workflows, and duplicate assignment prevention.
-- **`ManagerGoalServiceTest`**: Cumulative goal weight validation ($\le 100\%$), direct report authorization, and modification permissions on unstarted goals.
-- **`EmployeeGoalServiceTest`**: Goal acceptance lifecycle (`PENDING_ACCEPTANCE` $\rightarrow$ `ACCEPTED`), status progression (`IN_PROGRESS` $\rightarrow$ `COMPLETED`), and unauthorized access blocking.
-- **`GoalModificationServiceTest`**: Modification request lifecycle and manager review workflows.
-
----
-
-## ⚙️ Configuration & Environment Profiles
-
-Configurations are fully externalized via environment variables and profile properties:
-
-| Profile | Target Database | DDL Auto | SQL Logging |
-| :--- | :--- | :--- | :--- |
-| **`dev`** | `jdbc:postgresql://localhost:5432/advance_ascend_performance` | `update` | `true` (Formatted) |
-| **`prod`** | `${DB_URL}` (AWS RDS / Cloud PostgreSQL) | `validate` | `false` |
 
 ---
 

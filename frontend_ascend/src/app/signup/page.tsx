@@ -37,12 +37,24 @@ export default function Signup() {
     }, []);
 
     const isEmailValid = Boolean(email) && EMAIL_REGEX.test(email.trim());
+    const emailPrefix = email.includes("@") ? email.split("@")[0].toLowerCase().trim() : email.toLowerCase().trim();
+    const cleanName = name.toLowerCase().trim();
+    const lowerPassword = password.toLowerCase();
+
+    const containsUsername = Boolean(
+        password && (
+            (emailPrefix && emailPrefix.length >= 3 && lowerPassword.includes(emailPrefix)) ||
+            (cleanName && cleanName.length >= 3 && lowerPassword.includes(cleanName))
+        )
+    );
+    const isNotUsername = !containsUsername;
+
     const hasMinLength = password.length >= 12;
     const hasUppercase = /[A-Z]/.test(password);
     const hasLowercase = /[a-z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
     const hasSpecial = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?/~`]/.test(password);
-    const isPasswordValid = hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecial;
+    const isPasswordValid = hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecial && isNotUsername;
 
     async function submit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -52,6 +64,11 @@ export default function Signup() {
         const cleanEmail = email.trim().toLowerCase();
         if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
             setError("Please enter a valid email address (e.g. name@company.com)");
+            return;
+        }
+
+        if (containsUsername) {
+            setError("Password cannot contain or match your username, name, or email");
             return;
         }
 
@@ -336,6 +353,9 @@ export default function Signup() {
                             </span>
                             <span style={{ color: hasSpecial ? "#10b981" : "var(--text-muted, #9ca3af)", display: "flex", alignItems: "center", gap: "4px" }}>
                                 {hasSpecial ? "✓" : "○"} Special char (!@#$...)
+                            </span>
+                            <span style={{ color: isNotUsername && password ? "#10b981" : "var(--text-muted, #9ca3af)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                {isNotUsername && password ? "✓" : "○"} Not username/name
                             </span>
                         </div>
                     </div>

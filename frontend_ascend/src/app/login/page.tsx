@@ -40,7 +40,7 @@ export default function Login() {
     const [lockoutSeconds, setLockoutSeconds] = useState(0);
 
     const identifierValid = isIdentifierValid(email);
-    const passwordValid = isPasswordRegexValid(password);
+    const passwordValid = password.length > 0;
 
     // Direct Forgot Password Modal State (Email + Username verification)
     const [showForgotModal, setShowForgotModal] = useState(false);
@@ -112,6 +112,15 @@ export default function Login() {
         if (typeof window === "undefined") return;
         const params = new URLSearchParams(window.location.search);
 
+        const reason = params.get("reason");
+        if (reason === "idle_timeout" || reason === "idle") {
+            setError("You have been automatically logged out due to inactivity (idle timeout). Please sign in again.");
+            try {
+                window.history.replaceState({}, "", window.location.pathname);
+            } catch {}
+            return;
+        }
+
         const expired = params.get("expired");
         if (expired === "true") {
             setError("Your session has expired. Please log in again.");
@@ -151,6 +160,7 @@ export default function Login() {
                     role
                 })
             );
+            document.cookie = "app_suite_active_session=true; path=/; max-age=86400; SameSite=Lax";
 
             if (role === "HR") {
                 window.location.replace("/hr");
@@ -185,11 +195,6 @@ export default function Login() {
 
         if (!password) {
             setError("Please enter your password.");
-            return;
-        }
-
-        if (!isPasswordRegexValid(password)) {
-            setError("Invalid credentials. Password must meet security standards (minimum 12 characters, uppercase, lowercase, number, and special character).");
             return;
         }
 

@@ -78,14 +78,13 @@ class PasswordPolicyServiceTest {
     }
 
     @Test
-    @DisplayName("validateNewPassword: succeeds when password contains email parts as long as regex rules are met (e.g. Hinatashoyo@123)")
-    void validateNewPassword_AcceptsPasswordWithEmailUsername() {
-        User dotUser = User.builder().id(2L).email("hinatashoyo.5496144@gmail.com").name("Hinata Shoyo").passwordHash("$argon2id$somehash").build();
-        when(passwordService.matches("Hinatashoyo@123", dotUser.getPasswordHash())).thenReturn(false);
-        when(passwordHistoryRepository.findTop5ByUserIdOrderByCreatedAtDesc(2L)).thenReturn(List.of());
+    @DisplayName("validateNewPassword: throws exception when password contains user email or name")
+    void validateNewPassword_RejectsPasswordWithUsernameOrEmail() {
+        User user = User.builder().id(2L).email("hinatashoyo.5496144@gmail.com").name("Hinata Shoyo").passwordHash("$argon2id$somehash").build();
 
-        assertThatCode(() -> passwordPolicyService.validateNewPassword("Hinatashoyo@123", "Hinatashoyo@123", dotUser, null))
-                .doesNotThrowAnyException();
+        assertThatThrownBy(() -> passwordPolicyService.validateNewPassword("HinataShoyo@123", "HinataShoyo@123", user, null))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("cannot contain or match your username, name, or email");
     }
 
     @Test

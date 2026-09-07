@@ -12,6 +12,7 @@ import com.practice.springbootdemo.advance_performance_module.entity.UserStatus;
 import com.practice.springbootdemo.advance_performance_module.exception.BadRequestException;
 import com.practice.springbootdemo.advance_performance_module.exception.ResourceNotFoundException;
 import com.practice.springbootdemo.advance_performance_module.repository.*;
+import com.practice.springbootdemo.advance_performance_module.service.PasswordPolicyService;
 import com.practice.springbootdemo.advance_performance_module.service.SecurityAuditService;
 import com.practice.springbootdemo.advance_performance_module.service.SessionService;
 import com.practice.springbootdemo.advance_performance_module.service.UserCodeGeneratorService;
@@ -45,6 +46,7 @@ public class EmployeeManagementService {
     private final SecurityAuditLogRepository securityAuditLogRepository;
     private final SecurityAuditService securityAuditService;
     private final SessionService sessionService;
+    private final PasswordPolicyService passwordPolicyService;
 
     public EmployeeManagementService(
             UserRepository users,
@@ -61,7 +63,8 @@ public class EmployeeManagementService {
             ResetAuthorizationRepository resetAuthorizationRepository,
             SecurityAuditLogRepository securityAuditLogRepository,
             SecurityAuditService securityAuditService,
-            SessionService sessionService
+            SessionService sessionService,
+            PasswordPolicyService passwordPolicyService
     ) {
         this.users = users;
         this.departmentRepository = departmentRepository;
@@ -78,6 +81,7 @@ public class EmployeeManagementService {
         this.securityAuditLogRepository = securityAuditLogRepository;
         this.securityAuditService = securityAuditService;
         this.sessionService = sessionService;
+        this.passwordPolicyService = passwordPolicyService;
     }
 
     @Transactional
@@ -383,13 +387,6 @@ public class EmployeeManagementService {
 
         // 2. Update Credentials if a new password is provided
         if (request.newPassword() != null && !request.newPassword().isBlank()) {
-            if (request.newPassword().length() < 6) {
-                throw new BadRequestException("New password must be at least 6 characters");
-            }
-            if (!request.newPassword().equals(request.confirmPassword())) {
-                throw new BadRequestException("New password and confirm password do not match");
-            }
-
             // If user has an existing standard password, require current password verification
             boolean isOAuthPlaceholder = user.getPasswordHash() != null && user.getPasswordHash().startsWith("{noop}OAUTH2_NO_PASSWORD_");
             if (user.getPasswordHash() != null && !isOAuthPlaceholder) {
@@ -401,10 +398,14 @@ public class EmployeeManagementService {
                 }
             }
 
-            user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+            passwordPolicyService.validateNewPassword(request.newPassword(), request.confirmPassword(), user, request.currentPassword(), user.getName());
+
+            String encoded = passwordEncoder.encode(request.newPassword());
+            user.setPasswordHash(encoded);
             user.setPasswordChangedAt(LocalDateTime.now());
             user.setFailedLoginAttempts(0);
             user.setLockoutUntil(null);
+            passwordPolicyService.recordPasswordInHistory(user, encoded);
             log.info("Password credentials updated for User ID {}", userId);
         }
 
